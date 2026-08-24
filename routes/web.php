@@ -1,26 +1,38 @@
 <?php
 
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\CoachController;
-use App\Http\Controllers\CoachAuthController;
-use App\Http\Middleware\CoachAuthMiddleware;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CoachAuthController;
+use App\Http\Controllers\CoachController;
+use App\Http\Controllers\BookingController;
+use App\Models\Coach;
 
-// Area Allievi (Pubblica)
-Route::get('/', [BookingController::class, 'index'])->name('home');
-Route::get('/coach/{coach:slug}', [BookingController::class, 'show'])->name('calendar');
-Route::post('/coach/{coach:slug}/book', [BookingController::class, 'store'])->name('book');
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
 
-// Login / Logout Coach
-Route::get('/login-coach', [CoachAuthController::class, 'showLoginForm'])->name('coach.login');
-Route::post('/login-coach', [CoachAuthController::class, 'login'])->name('coach.login.post');
-Route::post('/logout-coach', [CoachAuthController::class, 'logout'])->name('coach.logout');
+// Home page: reindirizza o mostra i coach disponibili
+Route::get('/', function () {
+    $coaches = Coach::all();
+    return view('home', compact('coaches'));
+})->name('home');
 
-// Rotta per eliminare la prenotazione (Accessibile dai coach)
-Route::delete('/coach/bookings/{booking}', [CoachController::class, 'cancelBooking'])->name('coach.bookings.cancel');
+// Rotta index di fallback per evitare errori se richiamata
+Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
 
-// Area Riservata Coach (Protetta da Middleware)
-Route::middleware([CoachAuthMiddleware::class])->group(function () {
-    Route::get('/coach/{coach:slug}/dashboard', [CoachController::class, 'dashboard'])->name('coach.dashboard');
-    Route::post('/coach/{coach:slug}/toggle-slot', [CoachController::class, 'toggleSlot'])->name('coach.toggleSlot');
+// Autenticazione Coach
+Route::get('/coach/login', [CoachAuthController::class, 'showLoginForm'])->name('coach.login');
+Route::post('/coach/login', [CoachAuthController::class, 'login']);
+Route::post('/coach/logout', [CoachAuthController::class, 'logout'])->name('coach.logout');
+
+// Area Riservata Coach (Protetto da autenticazione)
+Route::middleware(['auth:coach'])->prefix('coach')->name('coach.')->group(function () {
+    Route::get('/{coach}/dashboard', [CoachController::class, 'dashboard'])->name('dashboard');
+    Route::post('/{coach}/toggle-slot', [CoachController::class, 'toggleSlot'])->name('toggleSlot');
+    Route::delete('/bookings/{id}/cancel', [CoachController::class, 'cancelBooking'])->name('bookings.cancel');
 });
+
+// Vista Calendario e Prenotazioni per gli Allievi (Pubblico)
+Route::get('/coach/{coach}', [BookingController::class, 'show'])->name('calendar');
+Route::post('/coach/{coach}/book', [BookingController::class, 'store'])->name('book');
