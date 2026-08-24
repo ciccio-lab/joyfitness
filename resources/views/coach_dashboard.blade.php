@@ -17,27 +17,16 @@
             <p class="text-xs text-zinc-400">Pannello Gestione Lezioni</p>
         </div>
 
-        <!-- Tasti Azione Header -->
         <div class="flex items-center space-x-2">
-            <!-- Pulsante Torna alla Vista Allievo -->
             <a href="{{ route('calendar', $coach->slug) }}" 
-               class="bg-zinc-800 hover:bg-red-600 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-xl transition-colors flex items-center space-x-2 border border-zinc-700" 
-               title="Vedi Calendario Allievo">
-                <svg class="w-5 h-5 text-red-500 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-                <span class="text-xs font-bold hidden sm:inline uppercase">Vista Allievo</span>
+               class="bg-zinc-800 hover:bg-red-600 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-xl transition-colors flex items-center space-x-2 border border-zinc-700">
+                <span class="text-xs font-bold uppercase">Vista Allievo</span>
             </a>
 
-            <!-- Tasto Logout -->
             <form action="{{ route('coach.logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="bg-zinc-800 hover:bg-red-600 text-white p-2.5 rounded-xl transition-colors flex items-center space-x-2 border border-zinc-700" title="Logout">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    <span class="text-xs font-bold hidden sm:inline uppercase">Esci</span>
+                <button type="submit" class="bg-zinc-800 hover:bg-red-600 text-white p-2.5 rounded-xl transition-colors flex items-center space-x-2 border border-zinc-700">
+                    <span class="text-xs font-bold uppercase">Esci</span>
                 </button>
             </form>
         </div>
@@ -50,13 +39,7 @@
             </div>
         @endif
 
-        @if(session('error'))
-            <div class="p-3 bg-red-600/20 border border-red-600 text-red-500 rounded-xl text-center text-xs font-bold">
-                {{ session('error') }}
-            </div>
-        @endif
-
-        <!-- BARRA ORIZZONTALE SELEZIONE GIORNO -->
+        <!-- BARRA SELEZIONE GIORNO -->
         <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 shadow-xl">
             <h2 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">Seleziona Giorno</h2>
             <div class="flex space-x-3 overflow-x-auto no-scrollbar pb-1">
@@ -78,7 +61,7 @@
             </div>
         </div>
 
-        <!-- ALLIEVI PRENOTATI NELLA DATA SELEZIONATA -->
+        <!-- PRENOTAZIONI -->
         <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-xl">
             <h2 class="text-base font-bold text-white uppercase mb-4 flex items-center justify-between">
                 <span>Prenotazioni del <span class="text-red-500">{{ $selectedDate->format('d/m/Y') }}</span></span>
@@ -92,34 +75,27 @@
                     @foreach($bookings as $booking)
                         <div class="flex justify-between items-center bg-black p-4 rounded-xl border border-zinc-800">
                             <div>
-                                <span class="text-lg font-black text-red-500 block">{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</span>
+                                <span class="text-lg font-black text-red-500 block">{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }}</span>
                                 <span class="text-white font-bold">{{ $booking->client_name }}</span>
                             </div>
                             
-                            <div class="flex items-center space-x-3">
-                                <span class="text-xs bg-zinc-800 text-zinc-300 font-bold px-3 py-1 rounded-lg hidden sm:inline">Confermato</span>
-                                
-                                <!-- Form per Annullare la Prenotazione -->
-                                <form action="{{ route('coach.bookings.cancel', $booking->id) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler annullare questa prenotazione?');">
-                                    @csrf
-                                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-colors flex items-center space-x-1">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                        </svg>
-                                        <span>Annulla</span>
-                                    </button>
-                                </form>
-                            </div>
+                            <form action="{{ route('coach.bookings.cancel', $booking->id) }}" method="POST" onsubmit="return confirm('Vuoi annullare questa prenotazione?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-colors">
+                                    Annulla
+                                </button>
+                            </form>
                         </div>
                     @endforeach
                 </div>
             @endif
         </section>
 
-        <!-- BLOCCO/SBLOCCO MANUALI DEGLI ORARI -->
+        <!-- GESTIONE ORARI -->
         <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-xl">
             <h2 class="text-base font-bold text-white uppercase mb-1">Gestione Orari Disponibili</h2>
-            <p class="text-xs text-zinc-400 mb-4">Clicca su uno slot per bloccarlo o sbloccarlo per la data selezionata.</p>
+            <p class="text-xs text-zinc-400 mb-4">Clicca su uno slot per bloccarlo o sbloccarlo.</p>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 @foreach($slots as $slot)
@@ -129,9 +105,7 @@
                         <input type="hidden" name="start_time" value="{{ $slot['time'] }}">
                         <button type="submit" 
                                 class="w-full p-3 rounded-xl border text-center transition-all font-bold 
-                                       {{ $slot['is_blocked'] 
-                                          ? 'bg-red-950/40 border-red-600 text-red-500' 
-                                          : 'bg-black border-zinc-800 text-white hover:border-zinc-600' }}">
+                                       {{ $slot['is_blocked'] ? 'bg-red-950/40 border-red-600 text-red-500' : 'bg-black border-zinc-800 text-white hover:border-zinc-600' }}">
                             <span class="block text-base">{{ $slot['time'] }}</span>
                             <span class="text-[10px] uppercase block tracking-wider mt-0.5 {{ $slot['is_blocked'] ? 'text-red-500 font-extrabold' : 'text-zinc-500' }}">
                                 {{ $slot['is_blocked'] ? 'NON DISPONIBILE' : 'DISPONIBILE' }}
