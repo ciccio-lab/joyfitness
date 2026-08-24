@@ -84,6 +84,13 @@
             @else
                 <div class="space-y-3">
                     @foreach($bookings as $booking)
+                    <form action="{{ route('coach.bookings.cancel', $booking->id) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler annullare questa prenotazione?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">
+                    Annulla
+                    </button>
+                    </form>
                         <div class="flex justify-between items-center bg-black p-4 rounded-xl border border-zinc-800">
                             <div>
                                 <span class="text-lg font-black text-red-500 block">{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</span>

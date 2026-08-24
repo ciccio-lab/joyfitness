@@ -17,6 +17,7 @@ Route::post('/logout-coach', [CoachAuthController::class, 'logout'])->name('coac
 
 // Area Riservata Coach (Protetta da Middleware)
 Route::middleware('coach.auth')->group(function () {
+    Route::delete('/coach/bookings/{booking}', [App\Http\Controllers\CoachController::class, 'cancelBooking'])->name('coach.bookings.cancel');
     Route::get('/coach/{coach:slug}/dashboard', [CoachController::class, 'dashboard'])->name('coach.dashboard');
     Route::post('/coach/{coach:slug}/toggle-slot', [CoachController::class, 'toggleSlot'])->name('coach.toggleSlot');
 });

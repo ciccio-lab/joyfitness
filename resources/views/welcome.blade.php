@@ -10,7 +10,7 @@
     <div class="max-w-md w-full text-center">
         <!-- Logo Joy Fitness -->
         <div class="mb-10">
-            <img src="{{ asset('images/logo.png') }}" alt="Joy Fitness Logo" class="h-28 mx-auto mb-4 object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x100/DC2626/FFFFFF?text=JOY+FITNESS';">
+           <img src="{{ asset('images/logo.png') }}" alt="Joy Fitness Logo">
             <h1 class="text-3xl font-black text-white tracking-widest uppercase">JOY <span class="text-red-600">FITNESS</span></h1>
             <p class="text-gray-400 text-sm mt-2">Scegli il tuo Personal Trainer per prenotare la lezione</p>
         </div>
