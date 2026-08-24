@@ -10,9 +10,27 @@ use Carbon\Carbon;
 
 class BookingController extends Controller
 {
+    /**
+     * Metodo index di fallback per evitare errori di routing.
+     */
+    public function index()
+    {
+        return redirect()->route('home');
+    }
+
+    /**
+     * Mostra il calendario e la disponibilità degli slot per l'allievo.
+     */
     public function show($slug, Request $request)
     {
-        $coach = Coach::where('slug', $slug)->firstOrFail();
+        // Cerca il coach tramite lo slug o restituisce 404
+        $coach = Coach::where('slug', $slug)->first();
+        
+        if (!$coach) {
+            // Se per caso viene passato un ID numerico anziché lo slug
+            $coach = Coach::findOrFail($slug);
+        }
+
         $selectedDate = $request->has('date') ? Carbon::parse($request->date) : Carbon::today();
 
         $days = [];
@@ -23,10 +41,13 @@ class BookingController extends Controller
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
 
         // Recuperiamo i blocchi impostati dal coach per questa data
-        $blockedTimes = BlockedSlot::where('coach_id', $coach->id)
-            ->whereDate('date', $selectedDate)
-            ->pluck('start_time')
-            ->toArray();
+        $blockedTimes = [];
+        if (class_exists(BlockedSlot::class)) {
+            $blockedTimes = BlockedSlot::where('coach_id', $coach->id)
+                ->whereDate('date', $selectedDate)
+                ->pluck('start_time')
+                ->toArray();
+        }
 
         // Recuperiamo le prenotazioni esistenti per questa data
         $bookings = Booking::where('coach_id', $coach->id)
@@ -54,7 +75,7 @@ class BookingController extends Controller
                 'time' => $formattedTime,
                 'is_blocked' => $isBlocked,
                 'count' => $count,
-                'is_full' => $isBlocked || $count >= 2, // Se è bloccato dal coach, lo consideriamo pieno/non disponibile
+                'is_full' => $isBlocked || $count >= 2, // Se bloccato o pieno (2 posti)
                 'bookings' => $slotBookings,
             ];
 
@@ -64,24 +85,33 @@ class BookingController extends Controller
         return view('calendar', compact('coach', 'selectedDate', 'days', 'slots'));
     }
 
+    /**
+     * Gestisce la prenotazione effettuata dall'allievo.
+     */
     public function store(Request $request, $slug)
     {
-        $coach = Coach::where('slug', $slug)->firstOrFail();
+        $coach = Coach::where('slug', $slug)->first();
+        if (!$coach) {
+            $coach = Coach::findOrFail($slug);
+        }
         
         $date = $request->input('booking_date');
         $startTime = $request->input('start_time');
 
-        // Controlliamo prima se il coach ha bloccato questo slot nel frattempo
-        $isBlocked = BlockedSlot::where('coach_id', $coach->id)
-            ->whereDate('date', $date)
-            ->where('start_time', $startTime)
-            ->exists();
-
-        if ($isBlocked) {
-            return back()->with('error', 'Questo orario è stato chiuso dal coach e non è disponibile.');
+        // Controlliamo se il coach ha bloccato questo slot nel frattempo
+        $isBlocked = false;
+        if (class_exists(BlockedSlot::class)) {
+            $isBlocked = BlockedSlot::where('coach_id', $coach->id)
+                ->whereDate('date', $date)
+                ->where('start_time', $startTime)
+                ->exists();
         }
 
-        // Controllo limite 2 posti
+        if ($isBlocked) {
+            return back()->with('error', 'Questo orario è stato chiuso dal coach e non è più disponibile.');
+        }
+
+        // Controllo limite massimo 2 posti
         $existingCount = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $date)
             ->where('start_time', 'LIKE', $startTime . '%')
