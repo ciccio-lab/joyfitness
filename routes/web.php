@@ -12,10 +12,10 @@ use App\Models\Coach;
 |--------------------------------------------------------------------------
 */
 
-// Home page: usa la vista corretta che hai in resources/views/ (es. 'welcome' o 'home')
+// Home page corretta che punta a welcome.blade.php
 Route::get('/', function () {
     $coaches = Coach::all();
-    return view('welcome', compact('coaches')); // Cambia 'welcome' con il nome esatto del tuo file blade principale se è diverso
+    return view('welcome', compact('coaches'));
 })->name('home');
 
 // Rotta index di fallback
