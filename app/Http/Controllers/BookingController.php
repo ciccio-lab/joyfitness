@@ -1,125 +1,84 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Coach;
 use App\Models\Booking;
-use App\Models\CoachUnavailability;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class BookingController extends Controller
 {
-    // Homepage con selezione del coach
     public function index()
     {
         $coaches = Coach::all();
         return view('welcome', compact('coaches'));
     }
 
-    // Vista calendario lato cliente
     public function show(Coach $coach, Request $request)
     {
-        $selectedDate = $request->query('date') 
-            ? Carbon::parse($request->query('date')) 
-            : Carbon::today();
+        $selectedDate = $request->has('date') ? Carbon::parse($request->date) : Carbon::today();
 
-        // Prossimi 14 giorni
-        $daysBar = [];
+        $days = [];
         for ($i = 0; $i < 14; $i++) {
-            $day = Carbon::today()->addDays($i);
-            $daysBar[] = [
-                'date_string' => $day->toDateString(),
-                'day_name'    => strtoupper($day->locale('it')->shortDayName),
-                'day_number'  => $day->format('d'),
-                'month_name'  => strtoupper($day->locale('it')->shortMonthName),
-                'is_selected' => $day->isSameDay($selectedDate),
-            ];
+            $days[] = Carbon::today()->addDays($i);
         }
 
-        // Orari: Lun-Ven 8-23 | Sab-Dom 8-19
+        $bookings = Booking::where('coach_id', $coach->id)
+            ->whereDate('booking_date', $selectedDate)
+            ->get();
+
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
-        $startHour = 8;
-
-        // Prenotazioni attive
-        $existingBookings = Booking::where('coach_id', $coach->id)
-            ->where('booking_date', $selectedDate->toDateString())
-            ->pluck('start_time')
-            ->map(fn($t) => Carbon::parse($t)->format('H:i'))
-            ->toArray();
-
-        // Slot bloccati dal coach (ricorrenti o data specifica)
-        $blockedSlots = CoachUnavailability::where('coach_id', $coach->id)
-            ->where(function ($q) use ($selectedDate) {
-                $q->where('specific_date', $selectedDate->toDateString())
-                  ->orWhere(function ($sub) use ($selectedDate) {
-                      $sub->whereNull('specific_date')
-                          ->where('day_of_week', $selectedDate->dayOfWeekIso);
-                  });
-            })
-            ->pluck('start_time')
-            ->map(fn($t) => Carbon::parse($t)->format('H:i'))
-            ->toArray();
 
         $slots = [];
-        $now = Carbon::now();
+        $startTime = Carbon::createFromTime(8, 0);
+        $endTime = Carbon::createFromTime($endHour, 0);
 
-        for ($hour = $startHour; $hour < $endHour; $hour++) {
-            $slotStart = $selectedDate->copy()->setTime($hour, 0);
-            $timeLabel = $slotStart->format('H:i');
-            $timeEndLabel = $slotStart->copy()->addHour()->format('H:i');
-
-            // Blocco slot passati nell'ora corrente del giorno stesso
-            $isPast = $selectedDate->isToday() && $slotStart->lte($now);
-            $isBooked = in_array($timeLabel, $existingBookings);
-            $isBlocked = in_array($timeLabel, $blockedSlots);
+        while ($startTime < $endTime) {
+            $formattedTime = $startTime->format('H:i');
+            
+            // Filtra le prenotazioni per questo specifico orario
+            $slotBookings = $bookings->filter(fn($b) => Carbon::parse($b->start_time)->format('H:i') === $formattedTime);
 
             $slots[] = [
-                'start_time' => $timeLabel,
-                'end_time'   => $timeEndLabel,
-                'available'  => !$isPast && !$isBooked && !$isBlocked,
-                'status'     => $isBooked ? 'Prenotato' : ($isBlocked ? 'Non disponibile' : ($isPast ? 'Scaduto' : 'Libero'))
+                'time' => $formattedTime,
+                'bookings' => $slotBookings,
+                'count' => $slotBookings->count(),
+                'is_full' => $slotBookings->count() >= 2,
             ];
+
+            $startTime->addHour();
         }
 
-        return view('calendar', compact('coach', 'daysBar', 'slots', 'selectedDate'));
+        return view('calendar', compact('coach', 'selectedDate', 'days', 'slots'));
     }
 
-    // Salvataggio prenotazione cliente
     public function store(Request $request, Coach $coach)
     {
         $request->validate([
-            'client_name'  => 'required|string|max:255',
-            'booking_date' => 'required|date|after_or_equal:today',
-            'start_time'   => 'required',
+            'booking_date' => 'required|date',
+            'start_time' => 'required',
+            'client_name' => 'required|string|max:255',
         ]);
 
-        $startTime = Carbon::parse($request->start_time);
-        $bookingDateTime = Carbon::parse($request->booking_date)->setTimeFrom($startTime);
+        // Conta quante persone sono già prenotate in quello slot
+        $existingCount = Booking::where('coach_id', $coach->id)
+            ->whereDate('booking_date', $request->booking_date)
+            ->where('start_time', $request->start_time)
+            ->count();
 
-        // Protezione contro prenotazioni retroattive
-        if ($bookingDateTime->lte(Carbon::now())) {
-            return back()->with('error', 'Impossibile prenotare un orario già passato!');
-        }
-
-        $endTime = $startTime->copy()->addHour();
-
-        $exists = Booking::where('coach_id', $coach->id)
-            ->where('booking_date', $request->booking_date)
-            ->where('start_time', $startTime->format('H:i:s'))
-            ->exists();
-
-        if ($exists) {
-            return back()->with('error', 'Orario già prenotato!');
+        if ($existingCount >= 2) {
+            return back()->with('error', 'Questo orario ha già raggiunto il massimo di 2 partecipanti.');
         }
 
         Booking::create([
-            'coach_id'     => $coach->id,
-            'client_name'  => $request->client_name,
+            'coach_id' => $coach->id,
             'booking_date' => $request->booking_date,
-            'start_time'   => $startTime->format('H:i:s'),
-            'end_time'     => $endTime->format('H:i:s'),
+            'start_time' => $request->start_time,
+            'end_time' => Carbon::parse($request->start_time)->addHour()->format('H:i:s'),
+            'client_name' => $request->client_name,
         ]);
 
-        return back()->with('success', 'Prenotazione confermata!');
+        return back()->with('success', 'Prenotazione effettuata con successo!');
     }
 }
