@@ -14,7 +14,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
         
-        // Assegna l'alias 'coach.auth' al middleware reale
         $middleware->alias([
             'coach.auth' => CoachAuthMiddleware::class,
         ]);
