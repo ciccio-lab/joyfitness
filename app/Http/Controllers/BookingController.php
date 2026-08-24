@@ -4,19 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Coach;
 use App\Models\Booking;
+use App\Models\BlockedSlot;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class BookingController extends Controller
 {
-    public function index()
+    public function show($slug, Request $request)
     {
-        $coaches = Coach::all();
-        return view('welcome', compact('coaches'));
-    }
-
-    public function show(Coach $coach, Request $request)
-    {
+        $coach = Coach::where('slug', $slug)->firstOrFail();
         $selectedDate = $request->has('date') ? Carbon::parse($request->date) : Carbon::today();
 
         $days = [];
@@ -24,11 +20,18 @@ class BookingController extends Controller
             $days[] = Carbon::today()->addDays($i);
         }
 
+        $endHour = $selectedDate->isWeekend() ? 19 : 23;
+
+        // Recuperiamo i blocchi impostati dal coach per questa data
+        $blockedTimes = BlockedSlot::where('coach_id', $coach->id)
+            ->whereDate('date', $selectedDate)
+            ->pluck('start_time')
+            ->toArray();
+
+        // Recuperiamo le prenotazioni esistenti per questa data
         $bookings = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $selectedDate)
             ->get();
-
-        $endHour = $selectedDate->isWeekend() ? 19 : 23;
 
         $slots = [];
         $startTime = Carbon::createFromTime(8, 0);
@@ -37,14 +40,22 @@ class BookingController extends Controller
         while ($startTime < $endTime) {
             $formattedTime = $startTime->format('H:i');
             
-            // Filtra le prenotazioni per questo specifico orario
-            $slotBookings = $bookings->filter(fn($b) => Carbon::parse($b->start_time)->format('H:i') === $formattedTime);
+            // Verifichiamo se l'orario è bloccato dal coach
+            $isBlocked = in_array($formattedTime, $blockedTimes);
+
+            // Filtriamo le prenotazioni per questo specifico orario
+            $slotBookings = $bookings->filter(function($b) use ($formattedTime) {
+                return Carbon::parse($b->start_time)->format('H:i') === $formattedTime;
+            });
+
+            $count = $slotBookings->count();
 
             $slots[] = [
                 'time' => $formattedTime,
+                'is_blocked' => $isBlocked,
+                'count' => $count,
+                'is_full' => $isBlocked || $count >= 2, // Se è bloccato dal coach, lo consideriamo pieno/non disponibile
                 'bookings' => $slotBookings,
-                'count' => $slotBookings->count(),
-                'is_full' => $slotBookings->count() >= 2,
             ];
 
             $startTime->addHour();
@@ -53,30 +64,38 @@ class BookingController extends Controller
         return view('calendar', compact('coach', 'selectedDate', 'days', 'slots'));
     }
 
-    public function store(Request $request, Coach $coach)
+    public function store(Request $request, $slug)
     {
-        $request->validate([
-            'booking_date' => 'required|date',
-            'start_time' => 'required',
-            'client_name' => 'required|string|max:255',
-        ]);
+        $coach = Coach::where('slug', $slug)->firstOrFail();
+        
+        $date = $request->input('booking_date');
+        $startTime = $request->input('start_time');
 
-        // Conta quante persone sono già prenotate in quello slot
+        // Controlliamo prima se il coach ha bloccato questo slot nel frattempo
+        $isBlocked = BlockedSlot::where('coach_id', $coach->id)
+            ->whereDate('date', $date)
+            ->where('start_time', $startTime)
+            ->exists();
+
+        if ($isBlocked) {
+            return back()->with('error', 'Questo orario è stato chiuso dal coach e non è disponibile.');
+        }
+
+        // Controllo limite 2 posti
         $existingCount = Booking::where('coach_id', $coach->id)
-            ->whereDate('booking_date', $request->booking_date)
-            ->where('start_time', $request->start_time)
+            ->whereDate('booking_date', $date)
+            ->where('start_time', 'LIKE', $startTime . '%')
             ->count();
 
         if ($existingCount >= 2) {
-            return back()->with('error', 'Questo orario ha già raggiunto il massimo di 2 partecipanti.');
+            return back()->with('error', 'Spiacenti, questo slot ha raggiunto il limite massimo di 2 posti.');
         }
 
         Booking::create([
             'coach_id' => $coach->id,
-            'booking_date' => $request->booking_date,
-            'start_time' => $request->start_time,
-            'end_time' => Carbon::parse($request->start_time)->addHour()->format('H:i:s'),
-            'client_name' => $request->client_name,
+            'booking_date' => $date,
+            'start_time' => $startTime,
+            'client_name' => $request->input('client_name'),
         ]);
 
         return back()->with('success', 'Prenotazione effettuata con successo!');

@@ -66,30 +66,41 @@
                         <div>
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-lg font-black text-red-500">{{ $slot['time'] }}</span>
-                                <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-lg {{ $slot['is_full'] ? 'bg-red-600/20 text-red-500 border border-red-600/30' : 'bg-zinc-800 text-zinc-300' }}">
-                                    {{ $slot['count'] }}/2 Posti
-                                </span>
+                                
+                                @if($slot['is_blocked'])
+                                    <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-lg bg-red-950/40 text-red-500 border border-red-600/30">
+                                        Non Disponibile
+                                    </span>
+                                @else
+                                    <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-lg {{ $slot['is_full'] ? 'bg-red-600/20 text-red-500 border border-red-600/30' : 'bg-zinc-800 text-zinc-300' }}">
+                                        {{ $slot['count'] }}/2 Posti
+                                    </span>
+                                @endif
                             </div>
 
-                            <!-- Nomi di chi si è prenotato -->
+                            <!-- Nomi di chi si è prenotato o stato bloccato -->
                             <div class="mb-3 space-y-1">
-                                @foreach($slot['bookings'] as $b)
-                                    <p class="text-xs text-zinc-300 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
-                                        👤 Occupato da: <span class="text-white font-bold">{{ $b->client_name }}</span>
-                                    </p>
-                                @endforeach
-                                @if($slot['count'] == 0)
-                                    <p class="text-xs text-zinc-500 italic">Nessuna prenotazione (2 posti liberi)</p>
-                                @elseif($slot['count'] == 1)
-                                    <p class="text-xs text-yellow-500 font-medium">1 posto ancora disponibile</p>
+                                @if($slot['is_blocked'])
+                                    <p class="text-xs text-red-500 font-bold uppercase italic py-2">Orario chiuso dal coach</p>
                                 @else
-                                    <p class="text-xs text-red-500 font-bold uppercase">Orario Completo</p>
+                                    @foreach($slot['bookings'] as $b)
+                                        <p class="text-xs text-zinc-300 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
+                                            👤 Occupato da: <span class="text-white font-bold">{{ $b->client_name }}</span>
+                                        </p>
+                                    @endforeach
+                                    @if($slot['count'] == 0)
+                                        <p class="text-xs text-zinc-500 italic">Nessuna prenotazione (2 posti liberi)</p>
+                                    @elseif($slot['count'] == 1)
+                                        <p class="text-xs text-yellow-500 font-medium">1 posto ancora disponibile</p>
+                                    @else
+                                        <p class="text-xs text-red-500 font-bold uppercase">Orario Completo</p>
+                                    @endif
                                 @endif
                             </div>
                         </div>
 
-                        <!-- Form di prenotazione se c'è posto -->
-                        @if(!$slot['is_full'])
+                        <!-- Form di prenotazione visibile SOLO se NON è bloccato e NON è pieno -->
+                        @if(!$slot['is_blocked'] && !$slot['is_full'])
                             <form action="{{ route('book', $coach->slug) }}" method="POST" class="space-y-2 mt-2 pt-2 border-t border-zinc-800/80">
                                 @csrf
                                 <input type="hidden" name="booking_date" value="{{ $selectedDate->toDateString() }}">
