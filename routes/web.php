@@ -12,13 +12,13 @@ use App\Models\Coach;
 |--------------------------------------------------------------------------
 */
 
-// Home page: reindirizza o mostra i coach disponibili
+// Home page: usa la vista corretta che hai in resources/views/ (es. 'welcome' o 'home')
 Route::get('/', function () {
     $coaches = Coach::all();
-    return view('home', compact('coaches'));
+    return view('welcome', compact('coaches')); // Cambia 'welcome' con il nome esatto del tuo file blade principale se è diverso
 })->name('home');
 
-// Rotta index di fallback per evitare errori se richiamata
+// Rotta index di fallback
 Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
 
 // Autenticazione Coach
@@ -26,13 +26,13 @@ Route::get('/coach/login', [CoachAuthController::class, 'showLoginForm'])->name(
 Route::post('/coach/login', [CoachAuthController::class, 'login']);
 Route::post('/coach/logout', [CoachAuthController::class, 'logout'])->name('coach.logout');
 
-// Area Riservata Coach (Protetto da autenticazione)
+// Area Riservata Coach
 Route::middleware(['auth:coach'])->prefix('coach')->name('coach.')->group(function () {
     Route::get('/{coach}/dashboard', [CoachController::class, 'dashboard'])->name('dashboard');
     Route::post('/{coach}/toggle-slot', [CoachController::class, 'toggleSlot'])->name('toggleSlot');
     Route::delete('/bookings/{id}/cancel', [CoachController::class, 'cancelBooking'])->name('bookings.cancel');
 });
 
-// Vista Calendario e Prenotazioni per gli Allievi (Pubblico)
+// Vista Calendario e Prenotazioni per gli Allievi
 Route::get('/coach/{coach}', [BookingController::class, 'show'])->name('calendar');
 Route::post('/coach/{coach}/book', [BookingController::class, 'store'])->name('book');
