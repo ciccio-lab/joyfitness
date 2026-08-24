@@ -3,25 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Area Riservata Coach - Joy Fitness</title>
+    <title>Login Coach - Joy Fitness</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white min-h-screen flex items-center justify-center p-6">
-    <div class="max-w-md w-full bg-zinc-900 p-8 rounded-2xl border border-red-600 shadow-2xl">
-        <div class="text-center mb-6">
-            <a href="{{ route('home') }}" class="text-xs text-zinc-500 hover:text-white font-bold uppercase tracking-wider block mb-3">&larr; Torna al sito</a>
-            <h1 class="text-2xl font-black text-white uppercase">Area <span class="text-red-600">Coach</span></h1>
-            <p class="text-xs text-zinc-400 mt-1">Accedi per gestire le tue lezioni e disponibilità</p>
+<body class="bg-black text-white min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-zinc-900 p-8 rounded-2xl border border-zinc-800 shadow-2xl space-y-6">
+        <div class="text-center">
+            <h1 class="text-2xl font-black text-red-600 uppercase">Area Coach</h1>
+            <p class="text-xs text-zinc-400 mt-1">Accedi per gestire le tue lezioni e gli orari</p>
         </div>
 
         @if(session('error'))
-            <div class="p-3 mb-4 bg-red-600/20 border border-red-600 text-red-500 rounded-xl text-xs text-center font-bold">
+            <div class="p-3 bg-red-600/20 border border-red-600 text-red-500 rounded-xl text-center text-xs font-bold">
                 {{ session('error') }}
-            </div>
-        @endif
-        @if(session('success'))
-            <div class="p-3 mb-4 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-xl text-xs text-center font-bold">
-                {{ session('success') }}
             </div>
         @endif
 
@@ -29,7 +23,8 @@
             @csrf
             <div>
                 <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Seleziona il tuo profilo</label>
-                <select name="slug" class="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-600">
+                <select name="slug" required class="w-full bg-black border border-zinc-700 rounded-xl p-3 text-white text-sm focus:border-red-600 focus:outline-none">
+                    <option value="" disabled selected>-- Scegli Coach --</option>
                     @foreach($coaches as $coach)
                         <option value="{{ $coach->slug }}">{{ $coach->name }}</option>
                     @endforeach
@@ -38,14 +33,18 @@
 
             <div>
                 <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Password</label>
-                <input type="password" name="password" required placeholder="••••••••" 
-                       class="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-600">
+                <input type="password" name="password" required placeholder="Inserisci password" 
+                       class="w-full bg-black border border-zinc-700 rounded-xl p-3 text-white text-sm focus:border-red-600 focus:outline-none">
             </div>
 
-            <button type="submit" class="w-full py-3 bg-red-600 font-black rounded-xl text-white hover:bg-red-700 transition-colors uppercase tracking-wider">
-                Accedi
+            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-colors uppercase tracking-wider text-sm shadow-lg shadow-red-600/30">
+                Accedi al Pannello
             </button>
         </form>
+
+        <div class="text-center pt-2">
+            <a href="{{ route('home') }}" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">← Torna alla Home</a>
+        </div>
     </div>
 </body>
 </html>

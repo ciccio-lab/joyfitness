@@ -12,7 +12,7 @@ use App\Models\Coach;
 |--------------------------------------------------------------------------
 */
 
-// Home page corretta che punta a welcome.blade.php
+// Home page principale
 Route::get('/', function () {
     $coaches = Coach::all();
     return view('welcome', compact('coaches'));
@@ -21,9 +21,9 @@ Route::get('/', function () {
 // Rotta index di fallback
 Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
 
-// Autenticazione Coach
+// Autenticazione Coach (con entrambi i nomi rotta supportati per sicurezza)
 Route::get('/coach/login', [CoachAuthController::class, 'showLoginForm'])->name('coach.login');
-Route::post('/coach/login', [CoachAuthController::class, 'login']);
+Route::post('/coach/login', [CoachAuthController::class, 'login'])->name('coach.login.post');
 Route::post('/coach/logout', [CoachAuthController::class, 'logout'])->name('coach.logout');
 
 // Area Riservata Coach
