@@ -98,14 +98,16 @@ class CoachController extends Controller
 
         return back()->with('success', $message);
         }
-          public function cancelBooking($id)
-          {
-          // Cerca la prenotazione
-          $booking = \App\Models\Booking::findOrFail($id);
-    
-          // Elimina la prenotazione rendendo lo slot orario nuovamente disponibile
-          $booking->delete();
+         public function cancelBooking($id)
+    {
+        // Cerca la prenotazione o fallisce con errore 404 se non esiste
+        $booking = \App\Models\Booking::find($id);
 
-          return redirect()->back()->with('success', 'Prenotazione annullata con successo. Orario di nuovo disponibile!');
-         }
+        if ($booking) {
+            $booking->delete();
+            return redirect()->back()->with('success', 'Prenotazione annullata con successo. Orario di nuovo disponibile!');
+        }
+
+        return redirect()->back()->with('error', 'Prenotazione non trovata.');
+    }
         }

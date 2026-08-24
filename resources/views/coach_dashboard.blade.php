@@ -84,25 +84,32 @@
             @else
                 <div class="space-y-3">
                     @foreach($bookings as $booking)
-                    <form action="{{ route('coach.bookings.cancel', $booking->id) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler annullare questa prenotazione?');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">
-                    Annulla
-                    </button>
-                    </form>
                         <div class="flex justify-between items-center bg-black p-4 rounded-xl border border-zinc-800">
                             <div>
                                 <span class="text-lg font-black text-red-500 block">{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</span>
                                 <span class="text-white font-bold">{{ $booking->client_name }}</span>
                             </div>
-                            <span class="text-xs bg-zinc-800 text-zinc-300 font-bold px-3 py-1 rounded-lg">Confermato</span>
+                            
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xs bg-zinc-800 text-zinc-300 font-bold px-3 py-1 rounded-lg hidden sm:inline">Confermato</span>
+                                
+                                <!-- Form per Annullare la Prenotazione -->
+                                <form action="{{ route('coach.bookings.cancel', $booking->id) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler annullare questa prenotazione?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-colors flex items-center space-x-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                        <span>Annulla</span>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     @endforeach
                 </div>
             @endif
         </section>
-
         <!-- BLOCCO/SBLOCCO MANUALI DEGLI ORARI -->
         <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-xl">
             <h2 class="text-base font-bold text-white uppercase mb-1">Gestione Orari Disponibili</h2>

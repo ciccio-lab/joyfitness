@@ -16,9 +16,11 @@ Route::get('/login-coach', [CoachAuthController::class, 'showLoginForm'])->name(
 Route::post('/login-coach', [CoachAuthController::class, 'login'])->name('coach.login.post');
 Route::post('/logout-coach', [CoachAuthController::class, 'logout'])->name('coach.logout');
 
+// Rotta per eliminare la prenotazione (Accessibile dai coach)
+Route::delete('/coach/bookings/{booking}', [CoachController::class, 'cancelBooking'])->name('coach.bookings.cancel');
+
 // Area Riservata Coach (Protetta da Middleware)
 Route::middleware([CoachAuthMiddleware::class])->group(function () {
-    Route::delete('/coach/bookings/{booking}', [CoachController::class, 'cancelBooking'])->name('coach.bookings.cancel');
     Route::get('/coach/{coach:slug}/dashboard', [CoachController::class, 'dashboard'])->name('coach.dashboard');
     Route::post('/coach/{coach:slug}/toggle-slot', [CoachController::class, 'toggleSlot'])->name('coach.toggleSlot');
 });
