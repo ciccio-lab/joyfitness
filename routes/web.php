@@ -3,6 +3,7 @@
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CoachController;
 use App\Http\Controllers\CoachAuthController;
+use App\Http\Middleware\CoachAuthMiddleware;
 use Illuminate\Support\Facades\Route;
 
 // Area Allievi (Pubblica)
@@ -16,8 +17,8 @@ Route::post('/login-coach', [CoachAuthController::class, 'login'])->name('coach.
 Route::post('/logout-coach', [CoachAuthController::class, 'logout'])->name('coach.logout');
 
 // Area Riservata Coach (Protetta da Middleware)
-Route::middleware('coach.auth')->group(function () {
-    Route::delete('/coach/bookings/{booking}', [App\Http\Controllers\CoachController::class, 'cancelBooking'])->name('coach.bookings.cancel');
+Route::middleware([CoachAuthMiddleware::class])->group(function () {
+    Route::delete('/coach/bookings/{booking}', [CoachController::class, 'cancelBooking'])->name('coach.bookings.cancel');
     Route::get('/coach/{coach:slug}/dashboard', [CoachController::class, 'dashboard'])->name('coach.dashboard');
     Route::post('/coach/{coach:slug}/toggle-slot', [CoachController::class, 'toggleSlot'])->name('coach.toggleSlot');
 });
