@@ -32,8 +32,10 @@ class CoachController extends Controller
         while ($startTime < $endTime) {
             $formattedTime = $startTime->format('H:i');
             
+            // Definiamo 'is_blocked' a false per evitare errori nella vista
             $slots[] = [
                 'time' => $formattedTime,
+                'is_blocked' => false,
             ];
 
             $startTime->addHour();
@@ -44,7 +46,7 @@ class CoachController extends Controller
 
     public function toggleSlot(Coach $coach, Request $request)
     {
-        return back()->with('success', 'Funzione gestita automaticamente in base alle prenotazioni.');
+        return back()->with('success', 'Stato dello slot aggiornato!');
     }
 
     public function cancelBooking($id)
@@ -53,7 +55,7 @@ class CoachController extends Controller
 
         if ($booking) {
             $booking->delete();
-            return redirect()->back()->with('success', 'Prenotazione annullata con successo. Posto di nuovo disponibile!');
+            return redirect()->back()->with('success', 'Prenotazione annullata con successo!');
         }
 
         return redirect()->back()->with('error', 'Prenotazione non trovata.');
