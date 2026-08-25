@@ -2,38 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Coach;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class CoachAuthController extends Controller
 {
     public function showLoginForm()
     {
-        $coaches = Coach::all();
-        return view('coach_login', compact('coaches'));
+        return view('coach.login');
     }
 
     public function login(Request $request)
     {
-        $request->validate([
-            'slug'     => 'required|string',
-            'password' => 'required|string',
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
-        $coach = Coach::where('slug', $request->slug)->first();
+        if (Auth::guard('coach')->attempt($credentials, $request->remember)) {
+            $request->session()->regenerate();
 
-        if ($coach && Hash::check($request->password, $coach->password)) {
-            session(['coach_logged_in' => $coach->id]);
-            return redirect()->route('coach.dashboard', $coach->slug);
+            $coach = Auth::guard('coach')->user();
+
+            return redirect()->intended(route('coach.dashboard', ['coach' => $coach->slug ?? $coach->id]));
         }
 
-        return back()->with('error', 'Password errata o coach non trovato!');
+        return back()->withErrors([
+            'email' => 'Le credenziali inserite non sono corrette.',
+        ])->onlyInput('email');
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        session()->forget('coach_logged_in');
-        return redirect()->route('coach.login')->with('success', 'Logout effettuato con successo!');
+        Auth::guard('coach')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('home');
     }
 }
