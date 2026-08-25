@@ -39,7 +39,7 @@
                 @php $isSel = $day->isSameDay($selectedDate); @endphp
                 <a href="{{ route('coach.dashboard', ['coach' => $coach->slug ?? $coach->id, 'date' => $day->format('Y-m-d')]) }}"
                    class="flex-shrink-0 px-5 py-3 rounded-2xl text-center border transition-all {{ $isSel ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-600/30' : 'bg-zinc-900 border-zinc-800 text-zinc-400' }}">
-                    <div class="text-xs uppercase font-bold">{{ $day->translatedFormat('D') }}</div>
+                    <div class="text-xs uppercase font-bold">{{ ucfirst($day->translatedFormat('D')) }}</div>
                     <div class="text-base font-black mt-0.5">{{ $day->format('d/m') }}</div>
                 </a>
             @endforeach
@@ -99,6 +99,7 @@
         </div>
 
     </div>
+
 <script>
     // Salva la posizione dello scroll prima del cambio data o invio form
     document.querySelectorAll('form, a').forEach(element => {
