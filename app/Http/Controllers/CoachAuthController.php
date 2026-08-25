@@ -9,6 +9,16 @@ class CoachAuthController extends Controller
 {
     public function showLoginForm()
     {
+        // Se la tua vista si trova in resources/views/login.blade.php
+        if (view()->exists('login')) {
+            return view('login');
+        }
+
+        // Se la vista si trova in resources/views/auth/login.blade.php
+        if (view()->exists('auth.login')) {
+            return view('auth.login');
+        }
+
         return view('coach.login');
     }
 

@@ -19,7 +19,6 @@ class BookingController extends Controller
 
     public function show(Request $request, $coachParam)
     {
-        // Cerca il coach per ID o per slug per evitare il 404
         $coach = Coach::where('id', $coachParam)
             ->orWhere('slug', $coachParam)
             ->firstOrFail();
@@ -44,7 +43,15 @@ class BookingController extends Controller
 
         $bookedTimes = $bookings->pluck('booking_time')->toArray();
 
-        return view('bookings.show', compact('coach', 'selectedDate', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
+        // Controllo automatico della vista corretta presente nel progetto
+        $viewName = 'show';
+        if (view()->exists('bookings.show')) {
+            $viewName = 'bookings.show';
+        } elseif (view()->exists('calendar')) {
+            $viewName = 'calendar';
+        }
+
+        return view($viewName, compact('coach', 'selectedDate', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
     }
 
     public function store(Request $request, $coachParam)
@@ -75,7 +82,7 @@ class BookingController extends Controller
         $exists = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $request->booking_date)
             ->where('booking_time', $request->booking_time)
-            exists();
+            ->exists();
 
         if ($exists) {
             return back()->with('error', 'Questo orario è stato già prenotato.');
