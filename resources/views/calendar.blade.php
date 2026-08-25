@@ -61,17 +61,17 @@
                     <div>
                         <div class="text-xl font-black text-white tracking-wider">{{ $slot['time'] }}</div>
                         <div class="text-xs font-bold uppercase mt-1">
-                            @if(!empty($slot['is_past']))
-                                <span class="text-zinc-600">Scaduto</span>
-                            @elseif(!empty($slot['is_blocked']))
-                                <span class="text-red-500">Non disponibile</span>
-                            @elseif($slot['count'] >= 2)
-                                <span class="text-amber-500">Completo (2/2)</span>
-                            @else
-                                <span class="text-emerald-400">Disponibile ({{ 2 - $slot['count'] }} {{ 2 - $slot['count'] == 1 ? 'posto' : 'posti' }})</span>
-                            @endif
-                        </div>
-                    </div>
+<div class="text-xs font-bold uppercase mt-1">
+    @if($slot['is_past'] ?? false)
+        <span class="text-zinc-600">Scaduto</span>
+    @elseif($slot['is_blocked'] ?? false)
+        <span class="text-red-500">Non disponibile</span>
+    @elseif(($slot['count'] ?? 0) >= 2)
+        <span class="text-amber-500">Completo (2/2)</span>
+    @else
+        <span class="text-emerald-400">Disponibile ({{ 2 - ($slot['count'] ?? 0) }} {{ (2 - ($slot['count'] ?? 0)) == 1 ? 'posto' : 'posti' }})</span>
+    @endif
+</div>                
 
                     <div>
                         @if(!$slot['is_full'])
