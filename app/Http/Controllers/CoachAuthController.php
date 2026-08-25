@@ -9,7 +9,11 @@ class CoachAuthController extends Controller
 {
     public function showLoginForm()
     {
-        return view('coach_login');
+        if (view()->exists('coach_login')) {
+            return view('coach_login');
+        }
+
+        return view('welcome');
     }
 
     public function login(Request $request)

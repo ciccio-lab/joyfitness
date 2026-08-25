@@ -26,6 +26,12 @@ class BookingController extends Controller
         $dateInput = $request->input('date', Carbon::today()->toDateString());
         $selectedDate = Carbon::parse($dateInput);
 
+        // Genera i giorni da mostrare nel selettore (prossimi 14 giorni)
+        $days = [];
+        for ($i = 0; $i < 14; $i++) {
+            $days[] = Carbon::today()->addDays($i);
+        }
+
         $startHour = 8;
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
 
@@ -43,7 +49,17 @@ class BookingController extends Controller
 
         $bookedTimes = $bookings->pluck('booking_time')->toArray();
 
-        return view('welcome', compact('coach', 'selectedDate', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
+        // Rileva la vista corretta presente nel tuo progetto
+        $viewName = 'calendar';
+        if (!view()->exists('calendar')) {
+            if (view()->exists('welcome')) {
+                $viewName = 'welcome';
+            } elseif (view()->exists('bookings.show')) {
+                $viewName = 'bookings.show';
+            }
+        }
+
+        return view($viewName, compact('coach', 'selectedDate', 'days', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
     }
 
     public function store(Request $request, $coachParam)
