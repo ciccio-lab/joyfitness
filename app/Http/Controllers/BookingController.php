@@ -93,6 +93,7 @@ class BookingController extends Controller
 
         $request->validate([
             'client_name'  => 'required|string|max:255',
+            'client_phone' => 'nullable|string|max:50',
             'booking_date' => 'required|date',
             'start_time'   => 'required|string',
         ]);
