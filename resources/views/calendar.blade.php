@@ -11,7 +11,7 @@
 
     <div class="max-w-3xl mx-auto space-y-6">
         
-       <!-- Logo e Intestazione Centrati -->
+        <!-- Logo e Intestazione -->
         <div class="flex flex-col items-center justify-center text-center mb-8">
             <a href="{{ route('home') }}" class="inline-block mb-3">
                 <img src="{{ asset('images/logo.png') }}" alt="Joy Fitness Logo" class="h-20 w-auto mx-auto block object-contain">
@@ -57,24 +57,37 @@
         <!-- Griglia Slot Orari -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             @foreach($slots as $slot)
-                <div class="p-4 rounded-2xl border flex items-center justify-between transition-all {{ $slot['is_full'] ? 'bg-zinc-950/50 border-zinc-900 opacity-60' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700' }}">
+                <div class="p-4 rounded-2xl border flex items-center justify-between transition-all {{ ($slot['is_full'] ?? false) ? 'bg-zinc-950/50 border-zinc-900 opacity-60' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700' }}">
                     <div>
                         <div class="text-xl font-black text-white tracking-wider">{{ $slot['time'] }}</div>
                         <div class="text-xs font-bold uppercase mt-1">
-<div class="text-xs font-bold uppercase mt-1">
-    @if($slot['is_past'] ?? false)
-        <span class="text-zinc-600">Scaduto</span>
-    @elseif($slot['is_blocked'] ?? false)
-        <span class="text-red-500">Non disponibile</span>
-    @elseif(($slot['count'] ?? 0) >= 2)
-        <span class="text-amber-500">Completo (2/2)</span>
-    @else
-        <span class="text-emerald-400">Disponibile ({{ 2 - ($slot['count'] ?? 0) }} {{ (2 - ($slot['count'] ?? 0)) == 1 ? 'posto' : 'posti' }})</span>
-    @endif
-</div>                
+                            @if($slot['is_past'] ?? false)
+                                <span class="text-zinc-600">Scaduto</span>
+                            @elseif($slot['is_blocked'] ?? false)
+                                <span class="text-red-500">Non disponibile</span>
+                            @elseif(($slot['count'] ?? 0) >= 2)
+                                <span class="text-amber-500">Completo (2/2)</span>
+                            @else
+                                <span class="text-emerald-400">Disponibile ({{ 2 - ($slot['count'] ?? 0) }} {{ (2 - ($slot['count'] ?? 0)) == 1 ? 'posto' : 'posti' }})</span>
+                            @endif
+                        </div>
+
+                        <!-- Mostra i nomi degli allievi già prenotati -->
+                        @if(!empty($slot['bookings']) && $slot['bookings']->count() > 0)
+                            <div class="mt-2 text-[11px] text-zinc-400 space-y-0.5 border-t border-zinc-800/80 pt-1.5">
+                                <span class="text-zinc-500 uppercase font-semibold block text-[9px] tracking-wider">Isctitti:</span>
+                                @foreach($slot['bookings'] as $b)
+                                    <div class="flex items-center gap-1 font-medium text-zinc-300">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-600 inline-block"></span>
+                                        {{ $b->client_name }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
 
                     <div>
-                        @if(!$slot['is_full'])
+                        @if(!($slot['is_full'] ?? false))
                             <button @click="openModal = true; selectedTime = '{{ $slot['time'] }}'"
                                     class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-red-600/20">
                                 Prenota
@@ -114,7 +127,7 @@
                 </div>
 
                 <div class="bg-black/50 p-3 rounded-xl text-xs space-y-1 text-zinc-400">
-                    <div><span class="font-bold text-zinc-200">Coach:</span> {{ $coach->name }}</div>
+                    <div><span class="font-bold text-zinc-200">Coach:</span> {{ trim(preg_replace('/(?i)\bcoach\b/', '', $coach->name)) }}</div>
                     <div><span class="font-bold text-zinc-200">Data:</span> {{ $selectedDate->format('d/m/Y') }}</div>
                     <div><span class="font-bold text-zinc-200">Orario:</span> <span class="text-red-500 font-black text-sm" x-text="selectedTime"></span></div>
                 </div>
