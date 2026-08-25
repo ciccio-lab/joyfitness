@@ -26,7 +26,6 @@ class BookingController extends Controller
         $dateInput = $request->input('date', Carbon::today()->toDateString());
         $selectedDate = Carbon::parse($dateInput);
 
-        // Genera i 14 giorni per il selettore
         $days = [];
         for ($i = 0; $i < 14; $i++) {
             $days[] = Carbon::today()->addDays($i);
@@ -35,7 +34,6 @@ class BookingController extends Controller
         $startHour = 8;
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
 
-        // Recupera slot bloccati e prenotazioni
         $blockedTimes = [];
         if (Schema::hasTable('blocked_slots')) {
             $blockedTimes = BlockedSlot::where('coach_id', $coach->id)
@@ -50,7 +48,6 @@ class BookingController extends Controller
 
         $bookedCounts = $bookings->groupBy('booking_time')->map->count();
 
-        // Genera la variabile $slots richiesta da calendar.blade.php
         $slots = [];
         for ($hour = $startHour; $hour <= $endHour; $hour++) {
             $timeString = sprintf('%02d:00', $hour);
@@ -65,9 +62,7 @@ class BookingController extends Controller
             ];
         }
 
-        $bookedTimes = $bookings->pluck('booking_time')->toArray();
-
-        return view('calendar', compact('coach', 'selectedDate', 'days', 'slots', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
+        return view('calendar', compact('coach', 'selectedDate', 'days', 'slots'));
     }
 
     public function store(Request $request, $coachParam)
@@ -76,18 +71,18 @@ class BookingController extends Controller
             ->orWhere('slug', $coachParam)
             ->firstOrFail();
 
+        // Accetta sia start_time che booking_time per retrocompatibilità
+        $bookingTime = $request->input('start_time') ?? $request->input('booking_time');
+
         $request->validate([
             'client_name' => 'required|string|max:255',
-            'client_email' => 'required|email|max:255',
-            'client_phone' => 'nullable|string|max:20',
             'booking_date' => 'required|date',
-            'booking_time' => 'required|string',
         ]);
 
         if (Schema::hasTable('blocked_slots')) {
             $isBlocked = BlockedSlot::where('coach_id', $coach->id)
                 ->whereDate('date', $request->booking_date)
-                ->where('start_time', $request->booking_time)
+                ->where('start_time', $bookingTime)
                 ->exists();
 
             if ($isBlocked) {
@@ -95,22 +90,22 @@ class BookingController extends Controller
             }
         }
 
-        $exists = Booking::where('coach_id', $coach->id)
+        $count = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $request->booking_date)
-            ->where('booking_time', $request->booking_time)
-            ->exists();
+            ->where('booking_time', $bookingTime)
+            ->count();
 
-        if ($exists) {
-            return back()->with('error', 'Questo orario è stato già prenotato.');
+        if ($count >= 2) {
+            return back()->with('error', 'Questo orario ha già raggiunto il limite massimo di prenotazioni.');
         }
 
         Booking::create([
             'coach_id' => $coach->id,
             'client_name' => $request->client_name,
-            'client_email' => $request->client_email,
-            'client_phone' => $request->client_phone,
+            'client_email' => $request->client_email ?? 'n/a',
+            'client_phone' => $request->client_phone ?? 'n/a',
             'booking_date' => $request->booking_date,
-            'booking_time' => $request->booking_time,
+            'booking_time' => $bookingTime,
         ]);
 
         return back()->with('success', 'Prenotazione effettuata con successo!');
