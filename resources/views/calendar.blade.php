@@ -11,6 +11,7 @@
 
     <div class="max-w-3xl mx-auto space-y-6">
         
+        <!-- Header -->
         <div class="flex flex-col items-center justify-center text-center mb-8">
             <a href="{{ route('home') }}" class="inline-block mb-3">
                 <img src="{{ asset('images/logo.png') }}" alt="Joy Fitness Logo" class="h-20 w-auto mx-auto block object-contain">
@@ -21,6 +22,7 @@
             <p class="text-xs text-zinc-400 mt-1 uppercase tracking-widest">Seleziona un giorno e un orario per la tua lezione</p>
         </div>
 
+        <!-- Feedback Messages -->
         @if(session('success'))
             <div class="p-4 bg-emerald-500/20 border border-emerald-500 text-emerald-400 rounded-2xl text-center font-bold text-sm">
                 {{ session('success') }}
@@ -33,6 +35,7 @@
             </div>
         @endif
 
+        <!-- Selettore Giorni -->
         <div class="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
             @foreach($days as $day)
                 @php $isSel = $day->isSameDay($selectedDate); @endphp
@@ -51,30 +54,33 @@
             <span class="text-xs text-zinc-500 uppercase font-semibold">Turni da 1 Ora</span>
         </div>
 
+        <!-- Griglia Slot Orari -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             @foreach($slots as $slot)
-                <div class="p-4 rounded-2xl border flex items-start justify-between transition-all {{ ($slot['is_full'] ?? false) ? 'bg-zinc-950/50 border-zinc-900 opacity-70' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700' }}">
+                <div class="p-4 rounded-2xl border flex items-start justify-between transition-all {{ $slot['is_full'] ? 'bg-zinc-950/60 border-zinc-900 opacity-75' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700' }}">
                     <div class="space-y-1">
                         <div class="text-xl font-black text-white tracking-wider">{{ $slot['time'] }}</div>
+                        
+                        <!-- Stato Slot -->
                         <div class="text-xs font-bold uppercase">
-                            @if($slot['is_past'] ?? false)
+                            @if($slot['is_past'])
                                 <span class="text-zinc-600">Scaduto</span>
-                            @elseif($slot['is_blocked'] ?? false)
+                            @elseif($slot['is_blocked'])
                                 <span class="text-red-500">Non disponibile</span>
-                            @elseif(($slot['count'] ?? 0) >= 2)
-                                <span class="text-amber-500">Completo (2/2)</span>
+                            @elseif($slot['count'] >= 2)
+                                <span class="text-amber-500 font-extrabold">Completo (2/2)</span>
                             @else
-                                <span class="text-emerald-400">Disponibile ({{ 2 - ($slot['count'] ?? 0) }} {{ (2 - ($slot['count'] ?? 0)) == 1 ? 'posto' : 'posti' }})</span>
+                                <span class="text-emerald-400">Disponibili: {{ 2 - $slot['count'] }} / 2</span>
                             @endif
                         </div>
 
-                        <!-- Lista allievi iscritti nello slot -->
-                        @if(!empty($slot['bookings']) && $slot['bookings']->count() > 0)
-                            <div class="mt-2 text-xs text-zinc-300 border-t border-zinc-800 pt-2 space-y-1">
-                                <span class="text-[10px] text-zinc-500 uppercase font-bold block tracking-wider">Iscritti:</span>
+                        <!-- Elenco Nomi Iscritti -->
+                        @if($slot['bookings']->count() > 0)
+                            <div class="mt-3 border-t border-zinc-800/80 pt-2 space-y-1">
+                                <span class="text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider block">Prenotati ({{ $slot['count'] }}/2):</span>
                                 @foreach($slot['bookings'] as $b)
-                                    <div class="flex items-center gap-1.5 font-semibold text-zinc-200">
-                                        <span class="w-2 h-2 rounded-full bg-red-600 inline-block"></span>
+                                    <div class="flex items-center gap-1.5 text-xs font-semibold text-zinc-200">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
                                         {{ $b->client_name }}
                                     </div>
                                 @endforeach
@@ -82,15 +88,16 @@
                         @endif
                     </div>
 
+                    <!-- Bottone di Prenotazione -->
                     <div>
-                        @if(!($slot['is_full'] ?? false))
+                        @if(!$slot['is_full'])
                             <button @click="openModal = true; selectedTime = '{{ $slot['time'] }}'"
                                     class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-red-600/20">
                                 Prenota
                             </button>
                         @else
-                            <button disabled class="px-4 py-2 bg-zinc-800/80 text-zinc-600 font-bold text-xs uppercase tracking-wider rounded-xl cursor-not-allowed border border-zinc-800">
-                                Completo
+                            <button disabled class="px-4 py-2 bg-zinc-800 text-zinc-600 font-bold text-xs uppercase tracking-wider rounded-xl cursor-not-allowed border border-zinc-800">
+                                {{ $slot['count'] >= 2 ? 'Completo' : 'Bloccato' }}
                             </button>
                         @endif
                     </div>

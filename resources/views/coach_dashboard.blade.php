@@ -13,7 +13,7 @@
         <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
             <div>
                 <h1 class="text-2xl font-black uppercase">Dashboard <span class="text-red-600">{{ $coach->name }}</span></h1>
-                <p class="text-xs text-zinc-400 mt-0.5">Gestione lezioni e blocco orari</p>
+                <p class="text-xs text-zinc-400 mt-0.5">Gestione lezioni e prenotazioni allievi</p>
             </div>
             <a href="{{ route('home') }}" class="text-xs text-zinc-400 hover:text-white uppercase font-bold">Esci</a>
         </div>
@@ -24,24 +24,26 @@
             </div>
         @endif
 
+        <!-- Selettore Giorni -->
         <div class="flex gap-2 overflow-x-auto pb-3">
             @foreach($days as $day)
                 @php $isSel = $day->isSameDay($selectedDate); @endphp
                 <a href="{{ route('coach.dashboard', ['coach' => $coach->slug ?? $coach->id, 'date' => $day->format('Y-m-d')]) }}"
-                   class="flex-shrink-0 px-5 py-3 rounded-2xl text-center border transition-all {{ $isSel ? 'bg-red-600 border-red-600 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-400' }}">
+                   class="flex-shrink-0 px-5 py-3 rounded-2xl text-center border transition-all {{ $isSel ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-600/30' : 'bg-zinc-900 border-zinc-800 text-zinc-400' }}">
                     <div class="text-xs uppercase font-bold">{{ $day->translatedFormat('D') }}</div>
                     <div class="text-base font-black mt-0.5">{{ $day->format('d/m') }}</div>
                 </a>
             @endforeach
         </div>
 
+        <!-- Lista Orari -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @foreach($slots as $slot)
                 <div class="p-5 rounded-2xl border bg-zinc-900 border-zinc-800 space-y-3">
-                    <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                    <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
                         <div>
                             <span class="text-2xl font-black text-white tracking-wider">{{ $slot['time'] }}</span>
-                            <span class="text-xs font-bold text-zinc-400 ml-2">({{ $slot['count'] }}/2 prenotati)</span>
+                            <span class="text-xs font-bold text-zinc-400 ml-2">({{ $slot['count'] }}/2 Iscritti)</span>
                         </div>
 
                         <form action="{{ route('coach.toggleSlot', $coach->slug ?? $coach->id) }}" method="POST">
@@ -54,23 +56,24 @@
                         </form>
                     </div>
 
-                    <div class="space-y-2">
+                    <!-- Nomi Allievi Prenotati -->
+                    <div class="space-y-2 pt-1">
                         @forelse($slot['bookings'] as $booking)
                             <div class="flex items-center justify-between bg-black/60 p-3 rounded-xl border border-zinc-800">
                                 <div>
                                     <div class="text-sm font-bold text-white">{{ $booking->client_name }}</div>
                                     <div class="text-xs text-zinc-400">Tel: {{ $booking->client_phone ?? 'N/D' }}</div>
                                 </div>
-                                <form action="{{ route('coach.cancelBooking', $booking->id) }}" method="POST" onsubmit="return confirm('Cancellare questa prenotazione?')">
+                                <form action="{{ route('coach.cancelBooking', $booking->id) }}" method="POST" onsubmit="return confirm('Vuoi cancellare questa prenotazione?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-xs font-bold text-red-500 hover:text-red-400 uppercase">
+                                    <button type="submit" class="text-xs font-bold text-red-500 hover:text-red-400 uppercase tracking-wider">
                                         Elimina
                                     </button>
                                 </form>
                             </div>
                         @empty
-                            <div class="text-xs text-zinc-500 italic py-1">Nessun iscritto per questo orario</div>
+                            <div class="text-xs text-zinc-500 italic py-1">Nessun allievo prenotato a quest'ora.</div>
                         @endforelse
                     </div>
                 </div>

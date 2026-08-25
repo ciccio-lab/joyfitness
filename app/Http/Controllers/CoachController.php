@@ -29,13 +29,14 @@ class CoachController extends Controller
         $startHour = 8;
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
 
-        $timeColumn = Schema::hasColumn('bookings', 'start_time') ? 'start_time' : 'booking_time';
+        $timeColumn = Schema::hasColumn('bookings', 'start_time') ? 'start_time' : (Schema::hasColumn('bookings', 'booking_time') ? 'booking_time' : 'time');
 
         $blockedTimes = [];
         if (Schema::hasTable('blocked_slots')) {
             $blockedTimes = BlockedSlot::where('coach_id', $coach->id)
                 ->whereDate('date', $selectedDate)
                 ->pluck('start_time')
+                ->map(fn($t) => Carbon::parse($t)->format('H:i'))
                 ->toArray();
         }
 
@@ -44,7 +45,7 @@ class CoachController extends Controller
             ->get();
 
         $dayBookings = $bookings->groupBy(function ($item) use ($timeColumn) {
-            return substr($item->$timeColumn, 0, 5);
+            return Carbon::parse($item->$timeColumn)->format('H:i');
         });
 
         $slots = [];
@@ -57,12 +58,12 @@ class CoachController extends Controller
             $isBlocked = in_array($timeString, $blockedTimes);
 
             $slots[] = [
-                'time' => $timeString,
-                'count' => $slotBookings->count(),
+                'time'       => $timeString,
+                'count'      => $slotBookings->count(),
                 'is_blocked' => $isBlocked,
-                'is_past' => $isPast,
-                'is_full' => $isBlocked || $isPast || $slotBookings->count() >= 2,
-                'bookings' => $slotBookings,
+                'is_past'    => $isPast,
+                'is_full'    => $isBlocked || $isPast || ($slotBookings->count() >= 2),
+                'bookings'   => $slotBookings,
             ];
         }
 
@@ -76,7 +77,7 @@ class CoachController extends Controller
             ->firstOrFail();
 
         $request->validate([
-            'date' => 'required|date',
+            'date'       => 'required|date',
             'start_time' => 'required|string',
         ]);
 
@@ -86,15 +87,15 @@ class CoachController extends Controller
 
         $slot = BlockedSlot::where('coach_id', $coach->id)
             ->whereDate('date', $request->date)
-            ->where('start_time', $request->start_time)
+            ->where('start_time', 'LIKE', Carbon::parse($request->start_time)->format('H:i') . '%')
             ->first();
 
         if ($slot) {
             $slot->delete();
         } else {
             BlockedSlot::create([
-                'coach_id' => $coach->id,
-                'date' => $request->date,
+                'coach_id'   => $coach->id,
+                'date'       => $request->date,
                 'start_time' => $request->start_time,
             ]);
         }
