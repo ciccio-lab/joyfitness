@@ -26,7 +26,11 @@ Route::get('/login', function () {
 Route::middleware(['auth:coach'])->prefix('coach')->name('coach.')->group(function () {
     Route::get('/{coach}/dashboard', [CoachController::class, 'dashboard'])->name('dashboard');
     Route::post('/{coach}/toggle-slot', [CoachController::class, 'toggleSlot'])->name('toggleSlot');
+    
+    // Rotte Cancellazione (copre qualsiasi combinazione di nomi e URL)
     Route::delete('/booking/{id}', [CoachController::class, 'cancelBooking'])->name('cancelBooking');
+    Route::delete('/bookings/{id}/cancel', [CoachController::class, 'cancelBooking'])->name('bookings.cancel');
+    Route::delete('/booking/{id}/cancel', [CoachController::class, 'cancelBooking'])->name('cancel');
 });
 
 // Vista Calendario Pubblica per gli Allievi
