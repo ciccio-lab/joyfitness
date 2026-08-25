@@ -26,7 +26,7 @@ Route::get('/coach/login', [CoachAuthController::class, 'showLoginForm'])->name(
 Route::post('/coach/login', [CoachAuthController::class, 'login'])->name('coach.login.post');
 Route::post('/coach/logout', [CoachAuthController::class, 'logout'])->name('coach.logout');
 
-// Alias 'login' richiesto di default dal middleware auth
+// Reindirizzamento della rotta predefinita 'login' di Laravel verso la login dei coach
 Route::get('/login', function () {
     return redirect()->route('coach.login');
 })->name('login');
