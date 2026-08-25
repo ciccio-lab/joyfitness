@@ -43,15 +43,7 @@ class BookingController extends Controller
 
         $bookedTimes = $bookings->pluck('booking_time')->toArray();
 
-        // Controllo automatico della vista corretta presente nel progetto
-        $viewName = 'show';
-        if (view()->exists('bookings.show')) {
-            $viewName = 'bookings.show';
-        } elseif (view()->exists('calendar')) {
-            $viewName = 'calendar';
-        }
-
-        return view($viewName, compact('coach', 'selectedDate', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
+        return view('welcome', compact('coach', 'selectedDate', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
     }
 
     public function store(Request $request, $coachParam)

@@ -31,7 +31,7 @@ class CoachController extends Controller
             ->whereDate('booking_date', $selectedDate)
             ->get();
 
-        return view('coach.dashboard', compact('coach', 'selectedDate', 'startHour', 'endHour', 'bookings', 'blockedTimes'));
+        return view('coach_dashboard', compact('coach', 'selectedDate', 'startHour', 'endHour', 'bookings', 'blockedTimes'));
     }
 
     public function toggleSlot(Request $request, $coachParam)
@@ -52,14 +52,12 @@ class CoachController extends Controller
 
         if ($slot) {
             $slot->delete();
-            $status = 'unblocked';
         } else {
             BlockedSlot::create([
                 'coach_id' => $coach->id,
                 'date' => $request->date,
                 'start_time' => $request->start_time,
             ]);
-            $status = 'blocked';
         }
 
         return back()->with('success', 'Stato dello slot aggiornato con successo.');
