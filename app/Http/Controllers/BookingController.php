@@ -26,7 +26,7 @@ class BookingController extends Controller
         $dateInput = $request->input('date', Carbon::today()->toDateString());
         $selectedDate = Carbon::parse($dateInput);
 
-        // Genera i giorni da mostrare nel selettore (prossimi 14 giorni)
+        // Genera i prossimi 14 giorni per il selettore nella vista calendar
         $days = [];
         for ($i = 0; $i < 14; $i++) {
             $days[] = Carbon::today()->addDays($i);
@@ -49,14 +49,10 @@ class BookingController extends Controller
 
         $bookedTimes = $bookings->pluck('booking_time')->toArray();
 
-        // Rileva la vista corretta presente nel tuo progetto
+        // Rilevamento dinamico della vista corretta
         $viewName = 'calendar';
         if (!view()->exists('calendar')) {
-            if (view()->exists('welcome')) {
-                $viewName = 'welcome';
-            } elseif (view()->exists('bookings.show')) {
-                $viewName = 'bookings.show';
-            }
+            $viewName = view()->exists('welcome') ? 'welcome' : 'coach_dashboard';
         }
 
         return view($viewName, compact('coach', 'selectedDate', 'days', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
