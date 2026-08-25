@@ -35,7 +35,7 @@
             </div>
         @endif
 
-        <!-- Selettore Giorni (Orizzontale) -->
+        <!-- Selettore Giorni -->
         <div class="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
             @foreach($days as $day)
                 @php $isSel = $day->isSameDay($selectedDate); @endphp
@@ -47,7 +47,6 @@
             @endforeach
         </div>
 
-        <!-- Titolo Data Selezionata -->
         <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
             <h2 class="text-lg font-bold text-zinc-200 capitalize">
                 {{ $selectedDate->translatedFormat('l d F Y') }}
@@ -62,9 +61,9 @@
                     <div>
                         <div class="text-xl font-black text-white tracking-wider">{{ $slot['time'] }}</div>
                         <div class="text-xs font-bold uppercase mt-1">
-                            @if($slot['is_past'])
+                            @if(!empty($slot['is_past']))
                                 <span class="text-zinc-600">Scaduto</span>
-                            @elseif($slot['is_blocked'])
+                            @elseif(!empty($slot['is_blocked']))
                                 <span class="text-red-500">Non disponibile</span>
                             @elseif($slot['count'] >= 2)
                                 <span class="text-amber-500">Completo (2/2)</span>
@@ -90,7 +89,6 @@
             @endforeach
         </div>
 
-        <!-- Footer Back -->
         <div class="text-center pt-6">
             <a href="{{ route('home') }}" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors uppercase font-bold tracking-wider">
                 ← Scegli un altro coach

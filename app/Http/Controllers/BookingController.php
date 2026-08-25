@@ -25,6 +25,7 @@ class BookingController extends Controller
 
         $dateInput = $request->input('date', Carbon::today()->toDateString());
         $selectedDate = Carbon::parse($dateInput);
+        $now = Carbon::now();
 
         $days = [];
         for ($i = 0; $i < 14; $i++) {
@@ -33,6 +34,8 @@ class BookingController extends Controller
 
         $startHour = 8;
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
+
+        $timeColumn = Schema::hasColumn('bookings', 'start_time') ? 'start_time' : 'booking_time';
 
         $blockedTimes = [];
         if (Schema::hasTable('blocked_slots')) {
@@ -46,11 +49,14 @@ class BookingController extends Controller
             ->whereDate('booking_date', $selectedDate)
             ->get();
 
-        $bookedCounts = $bookings->groupBy('booking_time')->map->count();
+        $bookedCounts = $bookings->groupBy($timeColumn)->map->count();
 
         $slots = [];
         for ($hour = $startHour; $hour <= $endHour; $hour++) {
             $timeString = sprintf('%02d:00', $hour);
+            $slotDateTime = Carbon::parse($selectedDate->toDateString() . ' ' . $timeString);
+            $isPast = $slotDateTime->lt($now);
+
             $count = $bookedCounts->get($timeString, 0);
             $isBlocked = in_array($timeString, $blockedTimes);
 
@@ -58,7 +64,8 @@ class BookingController extends Controller
                 'time' => $timeString,
                 'count' => $count,
                 'is_blocked' => $isBlocked,
-                'is_full' => $isBlocked || $count >= 2,
+                'is_past' => $isPast,
+                'is_full' => $isBlocked || $isPast || $count >= 2,
             ];
         }
 
@@ -71,13 +78,20 @@ class BookingController extends Controller
             ->orWhere('slug', $coachParam)
             ->firstOrFail();
 
-        // Accetta sia start_time che booking_time per retrocompatibilità
         $bookingTime = $request->input('start_time') ?? $request->input('booking_time');
 
         $request->validate([
             'client_name' => 'required|string|max:255',
             'booking_date' => 'required|date',
+            'start_time' => 'required|string',
         ]);
+
+        $slotDateTime = Carbon::parse($request->booking_date . ' ' . $bookingTime);
+        if ($slotDateTime->lt(Carbon::now())) {
+            return back()->with('error', 'Questo orario è già passato e non può essere prenotato.');
+        }
+
+        $timeColumn = Schema::hasColumn('bookings', 'start_time') ? 'start_time' : 'booking_time';
 
         if (Schema::hasTable('blocked_slots')) {
             $isBlocked = BlockedSlot::where('coach_id', $coach->id)
@@ -92,21 +106,23 @@ class BookingController extends Controller
 
         $count = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $request->booking_date)
-            ->where('booking_time', $bookingTime)
+            ->where($timeColumn, $bookingTime)
             ->count();
 
         if ($count >= 2) {
             return back()->with('error', 'Questo orario ha già raggiunto il limite massimo di prenotazioni.');
         }
 
-        Booking::create([
+        $bookingData = [
             'coach_id' => $coach->id,
             'client_name' => $request->client_name,
             'client_email' => $request->client_email ?? 'n/a',
             'client_phone' => $request->client_phone ?? 'n/a',
             'booking_date' => $request->booking_date,
-            'booking_time' => $bookingTime,
-        ]);
+            $timeColumn => $bookingTime,
+        ];
+
+        Booking::create($bookingData);
 
         return back()->with('success', 'Prenotazione effettuata con successo!');
     }

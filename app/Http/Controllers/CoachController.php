@@ -19,8 +19,8 @@ class CoachController extends Controller
 
         $dateInput = $request->input('date', Carbon::today()->toDateString());
         $selectedDate = Carbon::parse($dateInput);
+        $now = Carbon::now();
 
-        // 14 giorni per il selettore
         $days = [];
         for ($i = 0; $i < 14; $i++) {
             $days[] = Carbon::today()->addDays($i);
@@ -28,6 +28,8 @@ class CoachController extends Controller
 
         $startHour = 8;
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
+
+        $timeColumn = Schema::hasColumn('bookings', 'start_time') ? 'start_time' : 'booking_time';
 
         $blockedTimes = [];
         if (Schema::hasTable('blocked_slots')) {
@@ -37,16 +39,17 @@ class CoachController extends Controller
                 ->toArray();
         }
 
-        // Recupera le prenotazioni del giorno raggruppate per orario
         $dayBookings = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $selectedDate)
             ->get()
-            ->groupBy('booking_time');
+            ->groupBy($timeColumn);
 
-        // Genera la struttura slots richiesta da coach_dashboard.blade.php
         $slots = [];
         for ($hour = $startHour; $hour <= $endHour; $hour++) {
             $timeString = sprintf('%02d:00', $hour);
+            $slotDateTime = Carbon::parse($selectedDate->toDateString() . ' ' . $timeString);
+            $isPast = $slotDateTime->lt($now);
+
             $slotBookings = $dayBookings->get($timeString, collect());
             $isBlocked = in_array($timeString, $blockedTimes);
 
@@ -54,8 +57,9 @@ class CoachController extends Controller
                 'time' => $timeString,
                 'count' => $slotBookings->count(),
                 'is_blocked' => $isBlocked,
-                'is_full' => $isBlocked || $slotBookings->count() >= 2,
-                'bookings' => $slotBookings, // Passa la lista delle prenotazioni
+                'is_past' => $isPast,
+                'is_full' => $isBlocked || $isPast || $slotBookings->count() >= 2,
+                'bookings' => $slotBookings,
             ];
         }
 
