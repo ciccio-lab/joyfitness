@@ -21,12 +21,12 @@ Route::get('/', function () {
 // Rotta index di fallback
 Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
 
-// Autenticazione Coach (con entrambi i nomi rotta supportati per sicurezza)
-Route::get('/coach/login', [CoachAuthController::class, 'showLoginForm'])->name('coach.login');
+// Autenticazione Coach (Aggiunto ->name('login') per soddisfare il middleware auth)
+Route::get('/coach/login', [CoachAuthController::class, 'showLoginForm'])->name('login')->name('coach.login');
 Route::post('/coach/login', [CoachAuthController::class, 'login'])->name('coach.login.post');
 Route::post('/coach/logout', [CoachAuthController::class, 'logout'])->name('coach.logout');
 
-// Area Riservata Coach
+// Area Riservata Coach (Protetta da middleware)
 Route::middleware(['auth:coach'])->prefix('coach')->name('coach.')->group(function () {
     Route::get('/{coach}/dashboard', [CoachController::class, 'dashboard'])->name('dashboard');
     Route::post('/{coach}/toggle-slot', [CoachController::class, 'toggleSlot'])->name('toggleSlot');
