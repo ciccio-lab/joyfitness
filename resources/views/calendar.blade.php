@@ -11,13 +11,13 @@
 
     <div class="max-w-3xl mx-auto space-y-6">
         
-        <!-- Logo e Intestazione Centrati -->
+       <!-- Logo e Intestazione Centrati -->
         <div class="flex flex-col items-center justify-center text-center mb-8">
             <a href="{{ route('home') }}" class="inline-block mb-3">
                 <img src="{{ asset('images/logo.png') }}" alt="Joy Fitness Logo" class="h-20 w-auto mx-auto block object-contain">
             </a>
             <h1 class="text-3xl font-black uppercase tracking-wide text-white">
-                Coach <span class="text-red-600">{{ $coach->name }}</span>
+                Coach <span class="text-red-600">{{ trim(preg_replace('/(?i)\bcoach\b/', '', $coach->name)) }}</span>
             </h1>
             <p class="text-xs text-zinc-400 mt-1 uppercase tracking-widest">Seleziona un giorno e un orario per la tua lezione</p>
         </div>

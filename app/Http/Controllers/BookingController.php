@@ -113,6 +113,9 @@ class BookingController extends Controller
             return back()->with('error', 'Questo orario ha già raggiunto il limite massimo di prenotazioni.');
         }
 
+        // Calcolo automatico di end_time (1 ora dopo start_time)
+        $endTime = Carbon::parse($bookingTime)->addHour()->format('H:i');
+
         $bookingData = [
             'coach_id' => $coach->id,
             'client_name' => $request->client_name,
@@ -121,6 +124,11 @@ class BookingController extends Controller
             'booking_date' => $request->booking_date,
             $timeColumn => $bookingTime,
         ];
+
+        // Se la colonna end_time esiste nella tabella, la valorizziamo
+        if (Schema::hasColumn('bookings', 'end_time')) {
+            $bookingData['end_time'] = $endTime;
+        }
 
         Booking::create($bookingData);
 
