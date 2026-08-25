@@ -8,13 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('blocked_slots', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('coach_id')->constrained('coaches')->onDelete('cascade');
-            $table->date('date');
-            $table->string('start_time');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('blocked_slots')) {
+            Schema::create('blocked_slots', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('coach_id')->constrained('coaches')->onDelete('cascade');
+                $table->date('date');
+                $table->string('start_time');
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void
