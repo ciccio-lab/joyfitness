@@ -8,9 +8,10 @@
 </head>
 <body class="bg-black text-white min-h-screen flex items-center justify-center p-6">
     <div class="max-w-md w-full text-center">
-        <!-- Logo Joy Fitness -->
-        <div class="mb-10 text-center">
-            <img src="{{ asset('images/logo.png') }}" alt="Joy Fitness Logo" class="h-20 w-auto mx-auto mb-4 object-contain">
+        
+        <!-- Logo Joy Fitness Centrato -->
+        <div class="mb-10 flex flex-col items-center justify-center text-center">
+            <img src="{{ asset('images/logo.png') }}" alt="Joy Fitness Logo" class="h-24 w-auto mx-auto block object-contain mb-4">
             <h1 class="text-3xl font-black text-white tracking-widest uppercase">JOY <span class="text-red-600">FITNESS</span></h1>
             <p class="text-gray-400 text-sm mt-2">Scegli il tuo Personal Trainer per prenotare la lezione</p>
         </div>
