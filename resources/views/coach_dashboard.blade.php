@@ -99,6 +99,22 @@
         </div>
 
     </div>
+<script>
+    // Salva la posizione dello scroll prima del cambio data o invio form
+    document.querySelectorAll('form, a').forEach(element => {
+        element.addEventListener('click', function () {
+            localStorage.setItem('coachScrollPosition', window.scrollY);
+        });
+    });
 
+    // Ripristina la posizione dello scroll al ricaricamento
+    window.addEventListener('load', function () {
+        const scrollPosition = localStorage.getItem('coachScrollPosition');
+        if (scrollPosition) {
+            window.scrollTo(0, parseInt(scrollPosition));
+            localStorage.removeItem('coachScrollPosition');
+        }
+    });
+</script>
 </body>
 </html>
