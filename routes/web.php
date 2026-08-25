@@ -26,8 +26,7 @@ Route::get('/login', function () {
 Route::middleware(['auth:coach'])->prefix('coach')->name('coach.')->group(function () {
     Route::get('/{coach}/dashboard', [CoachController::class, 'dashboard'])->name('dashboard');
     Route::post('/{coach}/toggle-slot', [CoachController::class, 'toggleSlot'])->name('toggleSlot');
-    // CAMBIATO IL NOME IN cancelBooking
-    Route::delete('/bookings/{id}/cancel', [CoachController::class, 'cancelBooking'])->name('cancelBooking');
+    Route::delete('/booking/{id}', [CoachController::class, 'cancelBooking'])->name('cancelBooking');
 });
 
 // Vista Calendario Pubblica per gli Allievi

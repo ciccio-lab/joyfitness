@@ -15,12 +15,21 @@
                 <h1 class="text-2xl font-black uppercase">Dashboard <span class="text-red-600">{{ $coach->name }}</span></h1>
                 <p class="text-xs text-zinc-400 mt-0.5">Gestione lezioni e prenotazioni allievi</p>
             </div>
-            <a href="{{ route('home') }}" class="text-xs text-zinc-400 hover:text-white uppercase font-bold">Esci</a>
+            <form action="{{ route('coach.logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="text-xs text-zinc-400 hover:text-white uppercase font-bold">Logout</button>
+            </form>
         </div>
 
         @if(session('success'))
             <div class="p-4 bg-emerald-500/20 border border-emerald-500 text-emerald-400 rounded-2xl text-center font-bold text-sm">
                 {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="p-4 bg-red-600/20 border border-red-600 text-red-500 rounded-2xl text-center font-bold text-sm">
+                {{ session('error') }}
             </div>
         @endif
 
