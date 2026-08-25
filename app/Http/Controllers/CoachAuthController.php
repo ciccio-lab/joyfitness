@@ -31,20 +31,6 @@ class CoachAuthController extends Controller
             return redirect()->route('coach.dashboard', ['coach' => $coach->slug]);
         }
 
-        // Fallback tentativi standard via email se presenti nel form
-        if ($request->has('email')) {
-            $credentials = $request->validate([
-                'email' => ['required', 'email'],
-                'password' => ['required'],
-            ]);
-
-            if (Auth::guard('coach')->attempt($credentials, $request->remember)) {
-                $request->session()->regenerate();
-                $coach = Auth::guard('coach')->user();
-                return redirect()->route('coach.dashboard', ['coach' => $coach->slug]);
-            }
-        }
-
         return back()->withErrors([
             'password' => 'Credenziali non valide o password errata.',
         ])->onlyInput('slug');

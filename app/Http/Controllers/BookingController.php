@@ -26,7 +26,7 @@ class BookingController extends Controller
         $dateInput = $request->input('date', Carbon::today()->toDateString());
         $selectedDate = Carbon::parse($dateInput);
 
-        // Genera i prossimi 14 giorni per il selettore nella vista calendar
+        // Genera i 14 giorni per il selettore
         $days = [];
         for ($i = 0; $i < 14; $i++) {
             $days[] = Carbon::today()->addDays($i);
@@ -35,6 +35,7 @@ class BookingController extends Controller
         $startHour = 8;
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
 
+        // Recupera slot bloccati e prenotazioni
         $blockedTimes = [];
         if (Schema::hasTable('blocked_slots')) {
             $blockedTimes = BlockedSlot::where('coach_id', $coach->id)
@@ -47,15 +48,26 @@ class BookingController extends Controller
             ->whereDate('booking_date', $selectedDate)
             ->get();
 
-        $bookedTimes = $bookings->pluck('booking_time')->toArray();
+        $bookedCounts = $bookings->groupBy('booking_time')->map->count();
 
-        // Rilevamento dinamico della vista corretta
-        $viewName = 'calendar';
-        if (!view()->exists('calendar')) {
-            $viewName = view()->exists('welcome') ? 'welcome' : 'coach_dashboard';
+        // Genera la variabile $slots richiesta da calendar.blade.php
+        $slots = [];
+        for ($hour = $startHour; $hour <= $endHour; $hour++) {
+            $timeString = sprintf('%02d:00', $hour);
+            $count = $bookedCounts->get($timeString, 0);
+            $isBlocked = in_array($timeString, $blockedTimes);
+
+            $slots[] = [
+                'time' => $timeString,
+                'count' => $count,
+                'is_blocked' => $isBlocked,
+                'is_full' => $isBlocked || $count >= 2,
+            ];
         }
 
-        return view($viewName, compact('coach', 'selectedDate', 'days', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
+        $bookedTimes = $bookings->pluck('booking_time')->toArray();
+
+        return view('calendar', compact('coach', 'selectedDate', 'days', 'slots', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
     }
 
     public function store(Request $request, $coachParam)
