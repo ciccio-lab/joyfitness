@@ -19,6 +19,8 @@ class BookingController extends Controller
 
     public function show(Request $request, $coachParam)
     {
+        Carbon::setLocale('it');
+
         $coach = Coach::where('id', $coachParam)
             ->orWhere('slug', $coachParam)
             ->firstOrFail();
@@ -80,6 +82,8 @@ class BookingController extends Controller
 
     public function store(Request $request, $coachParam)
     {
+        Carbon::setLocale('it');
+
         $coach = Coach::where('id', $coachParam)
             ->orWhere('slug', $coachParam)
             ->firstOrFail();
@@ -124,7 +128,6 @@ class BookingController extends Controller
 
         $endTime = Carbon::parse($bookingTime)->addHour()->format('H:i');
 
-        // Costruzione dinamica per evitare SQL Exception su colonne mancanti
         $bookingData = [
             'coach_id'     => $coach->id,
             'client_name'  => $request->client_name,

@@ -167,6 +167,22 @@
         </div>
 
     </div>
+<script>
+    // Salva la posizione dello scroll prima dell'invio di un form o del click sui giorni
+    document.querySelectorAll('form, a').forEach(element => {
+        element.addEventListener('click', function () {
+            localStorage.setItem('scrollPosition', window.scrollY);
+        });
+    });
 
+    // Ripristina la posizione dello scroll dopo il ricaricamento della pagina
+    window.addEventListener('load', function () {
+        const scrollPosition = localStorage.getItem('scrollPosition');
+        if (scrollPosition) {
+            window.scrollTo(0, parseInt(scrollPosition));
+            localStorage.removeItem('scrollPosition');
+        }
+    });
+</script>
 </body>
 </html>
