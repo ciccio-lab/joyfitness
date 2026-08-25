@@ -71,7 +71,16 @@
                             <div class="flex items-center justify-between bg-black/60 p-3 rounded-xl border border-zinc-800">
                                 <div>
                                     <div class="text-sm font-bold text-white">{{ $booking->client_name }}</div>
-                                    <div class="text-xs text-zinc-400">Tel: {{ $booking->client_phone ?? 'N/D' }}</div>
+                                    <div class="text-xs text-zinc-400 font-mono mt-0.5">
+                                        Tel: 
+                                        @if($booking->client_phone && $booking->client_phone !== 'n/a')
+                                            <a href="tel:{{ $booking->client_phone }}" class="text-red-400 hover:underline font-bold">
+                                                {{ $booking->client_phone }}
+                                            </a>
+                                        @else
+                                            <span class="text-zinc-600 italic">N/D</span>
+                                        @endif
+                                    </div>
                                 </div>
                                 <form action="{{ route('coach.cancelBooking', $booking->id) }}" method="POST" onsubmit="return confirm('Vuoi cancellare questa prenotazione?')">
                                     @csrf

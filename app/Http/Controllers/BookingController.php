@@ -75,7 +75,7 @@ class BookingController extends Controller
                 'is_blocked' => $isBlocked,
                 'is_past'    => $isPast,
                 'is_full'    => $isFull,
-                'bookings'  => $slotBookings,
+                'bookings'   => $slotBookings,
             ];
         }
 
@@ -128,11 +128,12 @@ class BookingController extends Controller
 
         $endTime = Carbon::parse($bookingTime)->addHour()->format('H:i');
 
+        // Controllo rigoroso tramite filled per salvare correttamente il telefono
         $bookingData = [
             'coach_id'     => $coach->id,
             'client_name'  => $request->client_name,
-            'client_email' => $request->client_email ?? 'n/a',
-            'client_phone' => $request->client_phone ?? 'n/a',
+            'client_email' => $request->filled('client_email') ? $request->client_email : 'n/a',
+            'client_phone' => $request->filled('client_phone') ? $request->client_phone : 'n/a',
             'booking_date' => $request->booking_date,
             $timeColumn    => $bookingTime,
         ];

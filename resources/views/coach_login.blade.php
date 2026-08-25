@@ -8,8 +8,13 @@
 </head>
 <body class="bg-black text-white min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md bg-zinc-900 p-8 rounded-2xl border border-zinc-800 shadow-2xl space-y-6">
-        <div class="text-center">
-            <h1 class="text-2xl font-black text-red-600 uppercase">Area Coach</h1>
+        
+        <!-- Logo Centrato e Intestazione -->
+        <div class="flex flex-col items-center justify-center text-center">
+            <a href="{{ route('home') }}" class="inline-block mb-3">
+                <img src="{{ asset('images/logo.png') }}" alt="Joy Fitness Logo" class="h-16 w-auto mx-auto object-contain">
+            </a>
+            <h1 class="text-2xl font-black text-red-600 uppercase tracking-wide">Area Coach</h1>
             <p class="text-xs text-zinc-400 mt-1">Accedi per gestire le tue lezioni e gli orari</p>
         </div>
 
