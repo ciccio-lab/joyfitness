@@ -39,10 +39,13 @@ class CoachController extends Controller
                 ->toArray();
         }
 
-        $dayBookings = Booking::where('coach_id', $coach->id)
+        $bookings = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $selectedDate)
-            ->get()
-            ->groupBy($timeColumn);
+            ->get();
+
+        $dayBookings = $bookings->groupBy(function ($item) use ($timeColumn) {
+            return substr($item->$timeColumn, 0, 5);
+        });
 
         $slots = [];
         for ($hour = $startHour; $hour <= $endHour; $hour++) {

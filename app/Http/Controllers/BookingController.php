@@ -35,7 +35,6 @@ class BookingController extends Controller
         $startHour = 8;
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
 
-        // Gestione dinamica colonna orario (start_time o booking_time)
         $timeColumn = Schema::hasColumn('bookings', 'start_time') ? 'start_time' : 'booking_time';
 
         $blockedTimes = [];
@@ -50,8 +49,10 @@ class BookingController extends Controller
             ->whereDate('booking_date', $selectedDate)
             ->get();
 
-        // Raggruppa le prenotazioni per orario per passare i dati degli allievi alla vista
-        $dayBookings = $bookings->groupBy($timeColumn);
+        // Normalizza la chiave orario eliminando eventuali secondi (es. "08:00:00" -> "08:00")
+        $dayBookings = $bookings->groupBy(function ($item) use ($timeColumn) {
+            return substr($item->$timeColumn, 0, 5);
+        });
 
         $slots = [];
         for ($hour = $startHour; $hour <= $endHour; $hour++) {
@@ -83,6 +84,7 @@ class BookingController extends Controller
             ->firstOrFail();
 
         $bookingTime = $request->input('start_time') ?? $request->input('booking_time');
+        $bookingTime = substr($bookingTime, 0, 5);
 
         $request->validate([
             'client_name' => 'required|string|max:255',
@@ -90,7 +92,6 @@ class BookingController extends Controller
             'start_time' => 'required|string',
         ]);
 
-        // Blocco prenotazione se lo slot è già passato
         $slotDateTime = Carbon::parse($request->booking_date . ' ' . $bookingTime);
         if ($slotDateTime->lt(Carbon::now())) {
             return back()->with('error', 'Questo orario è già passato e non può essere prenotato.');
@@ -98,7 +99,6 @@ class BookingController extends Controller
 
         $timeColumn = Schema::hasColumn('bookings', 'start_time') ? 'start_time' : 'booking_time';
 
-        // Verifica slot disattivato dal coach
         if (Schema::hasTable('blocked_slots')) {
             $isBlocked = BlockedSlot::where('coach_id', $coach->id)
                 ->whereDate('date', $request->booking_date)
@@ -110,17 +110,15 @@ class BookingController extends Controller
             }
         }
 
-        // Verifica limite 2 persone per slot
         $count = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $request->booking_date)
-            ->where($timeColumn, $bookingTime)
+            ->where($timeColumn, 'LIKE', $bookingTime . '%')
             ->count();
 
         if ($count >= 2) {
             return back()->with('error', 'Questo orario ha già raggiunto il limite massimo di prenotazioni.');
         }
 
-        // Calcolo automatico dell'orario di fine (+1 ora)
         $endTime = Carbon::parse($bookingTime)->addHour()->format('H:i');
 
         $bookingData = [
@@ -132,7 +130,6 @@ class BookingController extends Controller
             $timeColumn => $bookingTime,
         ];
 
-        // Aggiunge end_time se la colonna è presente nel DB
         if (Schema::hasColumn('bookings', 'end_time')) {
             $bookingData['end_time'] = $endTime;
         }

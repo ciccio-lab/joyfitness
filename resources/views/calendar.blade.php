@@ -11,7 +11,6 @@
 
     <div class="max-w-3xl mx-auto space-y-6">
         
-        <!-- Logo e Intestazione -->
         <div class="flex flex-col items-center justify-center text-center mb-8">
             <a href="{{ route('home') }}" class="inline-block mb-3">
                 <img src="{{ asset('images/logo.png') }}" alt="Joy Fitness Logo" class="h-20 w-auto mx-auto block object-contain">
@@ -22,7 +21,6 @@
             <p class="text-xs text-zinc-400 mt-1 uppercase tracking-widest">Seleziona un giorno e un orario per la tua lezione</p>
         </div>
 
-        <!-- Feedback Messages -->
         @if(session('success'))
             <div class="p-4 bg-emerald-500/20 border border-emerald-500 text-emerald-400 rounded-2xl text-center font-bold text-sm">
                 {{ session('success') }}
@@ -35,7 +33,6 @@
             </div>
         @endif
 
-        <!-- Selettore Giorni -->
         <div class="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
             @foreach($days as $day)
                 @php $isSel = $day->isSameDay($selectedDate); @endphp
@@ -54,13 +51,12 @@
             <span class="text-xs text-zinc-500 uppercase font-semibold">Turni da 1 Ora</span>
         </div>
 
-        <!-- Griglia Slot Orari -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             @foreach($slots as $slot)
-                <div class="p-4 rounded-2xl border flex items-center justify-between transition-all {{ ($slot['is_full'] ?? false) ? 'bg-zinc-950/50 border-zinc-900 opacity-60' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700' }}">
-                    <div>
+                <div class="p-4 rounded-2xl border flex items-start justify-between transition-all {{ ($slot['is_full'] ?? false) ? 'bg-zinc-950/50 border-zinc-900 opacity-70' : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700' }}">
+                    <div class="space-y-1">
                         <div class="text-xl font-black text-white tracking-wider">{{ $slot['time'] }}</div>
-                        <div class="text-xs font-bold uppercase mt-1">
+                        <div class="text-xs font-bold uppercase">
                             @if($slot['is_past'] ?? false)
                                 <span class="text-zinc-600">Scaduto</span>
                             @elseif($slot['is_blocked'] ?? false)
@@ -72,13 +68,13 @@
                             @endif
                         </div>
 
-                        <!-- Mostra i nomi degli allievi già prenotati -->
+                        <!-- Lista allievi iscritti nello slot -->
                         @if(!empty($slot['bookings']) && $slot['bookings']->count() > 0)
-                            <div class="mt-2 text-[11px] text-zinc-400 space-y-0.5 border-t border-zinc-800/80 pt-1.5">
-                                <span class="text-zinc-500 uppercase font-semibold block text-[9px] tracking-wider">Isctitti:</span>
+                            <div class="mt-2 text-xs text-zinc-300 border-t border-zinc-800 pt-2 space-y-1">
+                                <span class="text-[10px] text-zinc-500 uppercase font-bold block tracking-wider">Iscritti:</span>
                                 @foreach($slot['bookings'] as $b)
-                                    <div class="flex items-center gap-1 font-medium text-zinc-300">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-red-600 inline-block"></span>
+                                    <div class="flex items-center gap-1.5 font-semibold text-zinc-200">
+                                        <span class="w-2 h-2 rounded-full bg-red-600 inline-block"></span>
                                         {{ $b->client_name }}
                                     </div>
                                 @endforeach
@@ -93,8 +89,8 @@
                                 Prenota
                             </button>
                         @else
-                            <button disabled class="px-4 py-2 bg-zinc-800 text-zinc-600 font-bold text-xs uppercase tracking-wider rounded-xl cursor-not-allowed">
-                                Bloccato
+                            <button disabled class="px-4 py-2 bg-zinc-800/80 text-zinc-600 font-bold text-xs uppercase tracking-wider rounded-xl cursor-not-allowed border border-zinc-800">
+                                Completo
                             </button>
                         @endif
                     </div>
