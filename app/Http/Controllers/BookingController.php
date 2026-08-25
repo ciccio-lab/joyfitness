@@ -17,16 +17,19 @@ class BookingController extends Controller
         return view('welcome', compact('coaches'));
     }
 
-    public function show(Request $request, Coach $coach)
+    public function show(Request $request, $coachParam)
     {
+        // Cerca il coach per ID o per slug per evitare il 404
+        $coach = Coach::where('id', $coachParam)
+            ->orWhere('slug', $coachParam)
+            ->firstOrFail();
+
         $dateInput = $request->input('date', Carbon::today()->toDateString());
         $selectedDate = Carbon::parse($dateInput);
 
-        // Genera slot orari (dalle 08:00 alle 22:00 / 19:00 nel weekend)
         $startHour = 8;
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
 
-        // Recupera orari bloccati dal coach (con controllo sicurezza se la tabella non è ancora migrata)
         $blockedTimes = [];
         if (Schema::hasTable('blocked_slots')) {
             $blockedTimes = BlockedSlot::where('coach_id', $coach->id)
@@ -35,7 +38,6 @@ class BookingController extends Controller
                 ->toArray();
         }
 
-        // Recupera le prenotazioni già effettuate dagli allievi
         $bookings = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $selectedDate)
             ->get();
@@ -45,8 +47,12 @@ class BookingController extends Controller
         return view('bookings.show', compact('coach', 'selectedDate', 'startHour', 'endHour', 'bookedTimes', 'blockedTimes'));
     }
 
-    public function store(Request $request, Coach $coach)
+    public function store(Request $request, $coachParam)
     {
+        $coach = Coach::where('id', $coachParam)
+            ->orWhere('slug', $coachParam)
+            ->firstOrFail();
+
         $request->validate([
             'client_name' => 'required|string|max:255',
             'client_email' => 'required|email|max:255',
@@ -55,7 +61,6 @@ class BookingController extends Controller
             'booking_time' => 'required|string',
         ]);
 
-        // Verifica che lo slot non sia già bloccato dal coach
         if (Schema::hasTable('blocked_slots')) {
             $isBlocked = BlockedSlot::where('coach_id', $coach->id)
                 ->whereDate('date', $request->booking_date)
@@ -67,11 +72,10 @@ class BookingController extends Controller
             }
         }
 
-        // Verifica che lo slot non sia già prenotato
         $exists = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $request->booking_date)
             ->where('booking_time', $request->booking_time)
-            ->exists();
+            exists();
 
         if ($exists) {
             return back()->with('error', 'Questo orario è stato già prenotato.');

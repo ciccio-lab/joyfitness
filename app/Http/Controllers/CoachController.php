@@ -10,77 +10,59 @@ use Carbon\Carbon;
 
 class CoachController extends Controller
 {
-    public function dashboard(Coach $coach, Request $request)
+    public function dashboard(Request $request, $coachParam)
     {
-        $selectedDate = $request->has('date') ? Carbon::parse($request->date) : Carbon::today();
+        $coach = Coach::where('id', $coachParam)
+            ->orWhere('slug', $coachParam)
+            ->firstOrFail();
 
-        // Genera i prossimi 14 giorni per la navigazione
-        $days = [];
-        for ($i = 0; $i < 14; $i++) {
-            $days[] = Carbon::today()->addDays($i);
-        }
+        $dateInput = $request->input('date', Carbon::today()->toDateString());
+        $selectedDate = Carbon::parse($dateInput);
 
+        $startHour = 8;
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
 
-        // Recupera gli orari bloccati dal coach per questo giorno
         $blockedTimes = BlockedSlot::where('coach_id', $coach->id)
             ->whereDate('date', $selectedDate)
             ->pluck('start_time')
             ->toArray();
 
-        // Recupera le prenotazioni esistenti per questo giorno
         $bookings = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $selectedDate)
             ->get();
 
-        $slots = [];
-        $startTime = Carbon::createFromTime(8, 0);
-        $endTime = Carbon::createFromTime($endHour, 0);
-
-        while ($startTime < $endTime) {
-            $formattedTime = $startTime->format('H:i');
-            $isBlocked = in_array($formattedTime, $blockedTimes);
-
-            $slotBookings = $bookings->filter(function($b) use ($formattedTime) {
-                return Carbon::parse($b->start_time)->format('H:i') === $formattedTime;
-            });
-
-            $slots[] = [
-                'time' => $formattedTime,
-                'is_blocked' => $isBlocked,
-                'count' => $slotBookings->count(),
-                'bookings' => $slotBookings,
-            ];
-
-            $startTime->addHour();
-        }
-
-        return view('coach_dashboard', compact('coach', 'selectedDate', 'days', 'slots'));
+        return view('coach.dashboard', compact('coach', 'selectedDate', 'startHour', 'endHour', 'bookings', 'blockedTimes'));
     }
 
-    public function toggleSlot(Coach $coach, Request $request)
+    public function toggleSlot(Request $request, $coachParam)
     {
-        $date = $request->input('date');
-        $time = $request->input('start_time');
+        $coach = Coach::where('id', $coachParam)
+            ->orWhere('slug', $coachParam)
+            ->firstOrFail();
 
-        $existing = BlockedSlot::where('coach_id', $coach->id)
-            ->whereDate('date', $date)
-            ->where('start_time', $time)
+        $request->validate([
+            'date' => 'required|date',
+            'start_time' => 'required|string',
+        ]);
+
+        $slot = BlockedSlot::where('coach_id', $coach->id)
+            ->whereDate('date', $request->date)
+            ->where('start_time', $request->start_time)
             ->first();
 
-        if ($existing) {
-            $existing->delete();
-            $message = "Slot {$time} riaperto con successo.";
+        if ($slot) {
+            $slot->delete();
+            $status = 'unblocked';
         } else {
             BlockedSlot::create([
                 'coach_id' => $coach->id,
-                'date' => $date,
-                'start_time' => $time,
+                'date' => $request->date,
+                'start_time' => $request->start_time,
             ]);
-            $message = "Slot {$time} bloccato con successo.";
+            $status = 'blocked';
         }
 
-        return back()->with('success', $message);
+        return back()->with('success', 'Stato dello slot aggiornato con successo.');
     }
 
     public function cancelBooking($id)
@@ -88,6 +70,6 @@ class CoachController extends Controller
         $booking = Booking::findOrFail($id);
         $booking->delete();
 
-        return back()->with('success', 'Prenotazione cancellata.');
+        return back()->with('success', 'Prenotazione cancellata con successo.');
     }
 }
