@@ -35,7 +35,6 @@ class BookingController extends Controller
         $startHour = 8;
         $endHour = $selectedDate->isWeekend() ? 19 : 23;
 
-        // Trova il nome della colonna orario usata nel database
         $timeColumn = Schema::hasColumn('bookings', 'start_time') ? 'start_time' : (Schema::hasColumn('bookings', 'booking_time') ? 'booking_time' : 'time');
 
         $blockedTimes = [];
@@ -47,12 +46,10 @@ class BookingController extends Controller
                 ->toArray();
         }
 
-        // Recupera le prenotazioni per il coach e per la data selezionata
         $bookings = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $selectedDate)
             ->get();
 
-        // Raggruppa forzando il formato HH:MM (es. 09:00:00 -> 09:00)
         $dayBookings = $bookings->groupBy(function ($item) use ($timeColumn) {
             return Carbon::parse($item->$timeColumn)->format('H:i');
         });
@@ -63,7 +60,6 @@ class BookingController extends Controller
             $slotDateTime = Carbon::parse($selectedDate->toDateString() . ' ' . $timeString);
             $isPast = $slotDateTime->lt($now);
 
-            // Recupera le prenotazioni corrispondenti a quest'ora
             $slotBookings = $dayBookings->get($timeString, collect());
             $count = $slotBookings->count();
             $isBlocked = in_array($timeString, $blockedTimes);
@@ -94,6 +90,7 @@ class BookingController extends Controller
         $request->validate([
             'client_name'  => 'required|string|max:255',
             'client_phone' => 'nullable|string|max:50',
+            'client_email' => 'nullable|string|max:255',
             'booking_date' => 'required|date',
             'start_time'   => 'required|string',
         ]);
@@ -116,7 +113,6 @@ class BookingController extends Controller
             }
         }
 
-        // Conteggio prenotazioni nello slot
         $count = Booking::where('coach_id', $coach->id)
             ->whereDate('booking_date', $request->booking_date)
             ->where($timeColumn, 'LIKE', $bookingTime . '%')
@@ -128,15 +124,21 @@ class BookingController extends Controller
 
         $endTime = Carbon::parse($bookingTime)->addHour()->format('H:i');
 
-        // Controllo rigoroso tramite filled per salvare correttamente il telefono
+        // Costruzione dinamica per evitare SQL Exception su colonne mancanti
         $bookingData = [
             'coach_id'     => $coach->id,
             'client_name'  => $request->client_name,
-            'client_email' => $request->filled('client_email') ? $request->client_email : 'n/a',
-            'client_phone' => $request->filled('client_phone') ? $request->client_phone : 'n/a',
             'booking_date' => $request->booking_date,
             $timeColumn    => $bookingTime,
         ];
+
+        if (Schema::hasColumn('bookings', 'client_email')) {
+            $bookingData['client_email'] = $request->filled('client_email') ? $request->client_email : 'n/a';
+        }
+
+        if (Schema::hasColumn('bookings', 'client_phone')) {
+            $bookingData['client_phone'] = $request->filled('client_phone') ? $request->client_phone : 'n/a';
+        }
 
         if (Schema::hasColumn('bookings', 'end_time')) {
             $bookingData['end_time'] = $endTime;

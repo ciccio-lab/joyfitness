@@ -2,17 +2,22 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Booking extends Model
 {
-   protected $fillable = [
+    use HasFactory;
+
+    protected $fillable = [
         'coach_id',
         'client_name',
         'client_email',
         'client_phone',
         'booking_date',
         'start_time',
+        'booking_time',
+        'time',
         'end_time',
     ];
 
